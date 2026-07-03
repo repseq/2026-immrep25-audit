@@ -1,0 +1,79 @@
+\section{Homology test}\label{sec:homology}
+
+\paragraph{Metric.} For a single chain, TCRs are grouped by epitope. Only
+equal-length CDR3s can share a Hamming distance, so pairs are counted within
+length bins. With $N_e$ TCRs for epitope $e$ in a cohort of $N$,
+\[
+P_{\text{self}}=\sum_e \binom{N_e}{2},\qquad
+P_{\text{nonself}}=\binom{N}{2}-P_{\text{self}},
+\]
+(over equal-length pairs) and, writing $m_{\le d}$/$l_{\le d}$ for within-/between-epitope
+pairs at Hamming $\le d$,
+\[
+\mathrm{S/N}(d)=\frac{m_{\le d}/P_{\text{self}}}{l_{\le d}/P_{\text{nonself}}}.
+\]
+The comparison is of \emph{rates}: non-self pairs vastly outnumber self pairs, so
+raw counts are not comparable---only after normalising by $P_{\text{self}}$ and
+$P_{\text{nonself}}$ does the enrichment appear. $d{=}0$ isolates publicity
+(identical CDR3s); $d{=}1$ is the substitution-neighbour convergence signal
+exploited by curated specificity databases~\cite{Shugay_2017}; signal $\Rightarrow$ S/N $\gg 1$, noise $\Rightarrow$
+S/N $\approx 1$.
+
+\paragraph{Result.} Figure~\ref{fig:hom} places the cohorts on the S/N axis at the
+matched design. The ordering is
+VDJdb-HQ $>$ TCRvdb-true $\gtrsim$ TCRvdb-false $>$ VDJdb-LQ $\gg$ immrep25 $>$ OLGA.
+On TR$\beta$ the verified cohorts reach S/N $=\hqHomB$ (VDJdb-HQ) and $\trueHomB$
+(TCRvdb-true), whereas immrep25 positives give only $\immHomB$ and the
+$P_{\text{gen}}$-matched OLGA floor is $\olgaHomB$. The same picture holds on
+TR$\alpha$ (immrep25 $\immHomA$ vs.\ OLGA $\olgaHomA$).
+
+\begin{figure}[h]\centering
+\input{analysis/fig_homology.tex}
+\caption{Homology S/N ($d{=}1$) per cohort, TR$\alpha$ and TR$\beta$, matched
+design ($E{=}2$, $K{=}30$, 200 bootstraps; bars = median, whiskers = 95\% CI).
+The whiskers are bootstrap confidence intervals over resampled epitopes \emph{and}
+TCRs, so their width mainly reflects between-epitope variation (each bootstrap draws
+$E{=}2$ epitopes; per-epitope $n{=}50$ for immrep25). Dashed line: noise floor
+S/N${=}1$. immrep25 positives sit just above the OLGA random floor and far below
+every quality cohort.}
+\label{fig:hom}
+\end{figure}
+
+\paragraph{By-epitope breakdown.} To show what drives those intervals,
+Fig.~\ref{fig:bee} plots the within-epitope neighbour rate for every epitope with
+$n\ge 50$ (one point per epitope); the vertical gap to each cohort's non-self rate
+(red bar) is the S/N. immrep25's swarm hugs its non-self line, whereas the verified
+cohorts sit orders of magnitude above. Table~\ref{tab:epi} lists all 20 immrep25
+epitopes: in total they contribute only $\immWithinB$ (TR$\beta$) / $\immWithinA$
+(TR$\alpha$) within-epitope Hamming-$1$ neighbours --- versus $\olgaWithinB$ /
+$\olgaWithinA$ for the $P_{\text{gen}}$-matched OLGA control and tens of thousands
+for the VDJdb cohorts --- and even that handful is concentrated in a few epitopes
+(e.g.\ YLFNADIWI) and is entirely public (\S\ref{sec:publicity}).
+
+\begin{figure}[h]\centering
+\input{analysis/fig_beeswarm.tex}
+\caption{Per-epitope within-epitope neighbour rate (TR$\beta$, Hamming$\le 1$); each
+point is one epitope ($n\ge 50$). Red bars = cohort pooled cross-epitope (non-self)
+rate; the vertical gap is the homology S/N.}
+\label{fig:bee}
+\end{figure}
+
+\begin{table}[h]\centering\small
+\input{analysis/immrep_epitope_table.tex}
+\caption{immrep25 positives by epitope ($n$ TCRs) and their count of within-epitope
+Hamming-$1$ CDR3 neighbours per chain, versus the OLGA control. Sorted by TR$\beta$.}
+\label{tab:epi}
+\end{table}
+
+\paragraph{Graph view.} The S/N ratio is the within- vs.\ between-epitope
+edge-density of the homology graph (nodes${=}$CDR3, edges${=}$Hamming${\le}1$).
+Figure~\ref{fig:homgraph} renders it (graphviz \texttt{sfdp} layout): the verified
+cohorts form dense epitope-coloured cliques, while immrep25 and OLGA are almost
+edgeless point clouds.
+
+\begin{figure}[h]\centering
+\includegraphics[width=\linewidth]{../results/figures/fig_homology_graph_TRB.pdf}
+\caption{TR$\beta$ homology graph per cohort (equal sampling). Edge counts:
+VDJdb-HQ $\sim$550, TCRvdb-true 75, versus immrep25 $\sim$17 and OLGA $\sim$1.}
+\label{fig:homgraph}
+\end{figure}

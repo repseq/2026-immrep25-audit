@@ -1,0 +1,7 @@
+n_nodes,n_edges,assortativity,modularity,within_frac,cohort,label
+120,75,1.0,0.4892444444444445,1.0,tcrvdb_true,TCRvdb true
+71,260,1.0,0.05964497041420122,1.0,vdjdb_hq,VDJdb HQ
+120,9,1.0,0.345679012345679,1.0,vdjdb_lq,VDJdb LQ
+119,34,,0.0,1.0,tcrvdb_false,TCRvdb false
+100,4,,0.0,1.0,immrep25_pos,immrep25 pos
+100,0,,,,olga_random,OLGA random

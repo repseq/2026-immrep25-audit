@@ -1,0 +1,43 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=2.4cm]{geometry}
+\usepackage{tikz}
+\usepackage{gnuplot-lua-tikz}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+\usetikzlibrary{positioning,arrows.meta,shapes.geometric}
+
+\input{analysis/audit_macros}
+
+\title{\textbf{An audit of the immrep25 unseen-peptide benchmark}\\[2pt]
+\large Signal-to-noise of CDR3 homology and V/J chain pairing across the positive set}
+\author{Anna E. Koneva \and Mikhail Shugay\thanks{ISALGO lab.
+Correspondence: \texttt{mikhail.shugay@gmail.com}}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent We ask whether the \emph{positive} TCR--peptide assignments in the
+immrep25 unseen-peptide benchmark carry epitope-specific signal, or only noise and
+publicity. Two biologically-grounded probes---within- vs.\ between-epitope CDR3
+\emph{homology} and per-epitope V/J \emph{chain pairing}---are calibrated against
+cohorts of known quality (TCRvdb experimentally verified / refuted; VDJdb high- /
+low-reference-support) and a generation-probability--matched OLGA random floor.
+On both probes and both chains the immrep25 positives sit at the noise floor,
+indistinguishable from the pgen-matched random control; their only measurable
+homology is fully explained by public TCRs. We conclude the positive labels are
+not backed by convergent-TCR biology.
+\end{abstract}
+
+\input{chapters/00-data}
+\input{chapters/01-homology}
+\input{chapters/02-pairing}
+\input{chapters/03-publicity}
+\input{chapters/04-conclusion}
+
+\bibliographystyle{unsrt}
+\bibliography{refs}
+\end{document}

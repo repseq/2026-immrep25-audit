@@ -1,0 +1,38 @@
+\section{Conclusion}\label{sec:conclusion}
+
+Across both probes and both chains the calibration cohorts recover the expected
+order, and the immrep25 positives fall at the bottom, on top of the
+$P_{\text{gen}}$-matched random floor (Fig.~\ref{fig:ladder}). Their only
+measurable homology is contributed by public TCRs and vanishes when those are
+removed; their chain pairing shows no coupling beyond marginals. We therefore find
+\emph{no evidence of epitope-specific signal---in homology or chain pairing---among
+the immrep25 positives beyond noise and publicity}.
+
+\begin{figure}[h]\centering
+\begin{tikzpicture}[font=\footnotesize,>=Latex,
+  rung/.style={draw,rounded corners,minimum width=52mm,minimum height=7mm,align=center}]
+\definecolor{sig}{HTML}{2166ac}\definecolor{weak}{HTML}{67a9cf}
+\definecolor{noise}{HTML}{b2182b}\definecolor{test}{HTML}{ef8a00}
+\node[rung,fill=sig!25]  (a) at (0,5.0) {VDJdb HQ \hfill S/N$\approx$285 (TR$\beta$)};
+\node[rung,fill=sig!18]  (b) at (0,4.1) {TCRvdb true \hfill S/N$\approx$33};
+\node[rung,fill=sig!12]  (c) at (0,3.2) {TCRvdb false \hfill S/N$\approx$29};
+\node[rung,fill=weak!25] (d) at (0,2.3) {VDJdb LQ \hfill S/N$\approx$15};
+\node[rung,fill=test!30] (e) at (0,1.2) {\textbf{immrep25 pos} \hfill S/N$\approx$2.5};
+\node[rung,fill=noise!22](f) at (0,0.3) {OLGA random \hfill S/N$\approx$1.0};
+\draw[->,thick] (-3.4,0.0) -- (-3.4,5.4) node[above,align=center]{signal};
+\draw[dashed,gray] (-2.7,0.75) -- (2.7,0.75) node[right,black]{\scriptsize noise floor};
+\node[test,right=1mm of e,xshift=52mm,align=left]
+  {$\leftarrow$ non-public: S/N$\to$1.0\\\phantom{x}\ \ MI $z\approx0$};
+\end{tikzpicture}
+\caption{Signal-to-noise ladder (TR$\beta$ homology, matched design). The immrep25
+positives sit one rung above the random floor; stripping public TCRs lowers them
+onto it.}
+\label{fig:ladder}
+\end{figure}
+
+\paragraph{Caveats.} TCRvdb true/false separate less than expected because
+$p_{\text{adj}}$ scores differential enrichment in one screen rather than absence of
+specificity, so ``false'' still contains epitope-associated TCRs; the matched design
+is capped at $E{=}2$ epitopes by TCRvdb. Neither affects the immrep25$\approx$OLGA
+result, which is established at immrep25's own 20-epitope design as well.
+Reproduce with \texttt{python run\_audit.py} then \texttt{make}.

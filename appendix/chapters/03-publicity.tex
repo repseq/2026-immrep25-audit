@@ -1,0 +1,32 @@
+\section{Publicity control}\label{sec:publicity}
+
+The one alternative to ``pure noise'' is \emph{publicity}: immrep25 might reuse
+public TCRs whose chance homology mimics epitope signal. Although only $0.3\%$ of
+positives share \emph{both} chains exactly with VDJdb, allowing a single
+substitution and either chain, $\pubAny\%$ of immrep25 positives are within
+Hamming $\le 1$ of a known VDJdb/TCRvdb TCR ($\pubA\%$ on $\alpha$, $\pubB\%$ on
+$\beta$)---the $\alpha$ chain being especially germline-public. Consistently, the
+positives are enriched for high generation probability relative to raw OLGA
+sampling (Fig.~\ref{fig:pgen}), i.e.\ they are ``easy-to-generate'', public-leaning
+sequences; this is exactly why the random control must be $P_{\text{gen}}$-matched.
+
+Removing public positives collapses the (already weak) homology to the noise floor:
+S/N falls from $\immHomB$ to $\npHomB$ on TR$\beta$ and from $\immHomA$ to $\npHomA$
+on TR$\alpha$ (Fig.~\ref{fig:pub}). The residual signal was therefore publicity, not
+epitope-specific convergence.
+
+\begin{figure}[h]\centering
+\input{analysis/fig_pgen.tex}
+\caption{Per-chain $\log_{10}P_{\text{gen}}$ (kernel density): immrep25 positives
+(filled) vs.\ raw OLGA generation (line). Positives skew to higher $P_{\text{gen}}$
+(public-leaning), motivating the $P_{\text{gen}}$-matched control.}
+\label{fig:pgen}
+\end{figure}
+
+\begin{figure}[h]\centering
+\input{analysis/fig_publicity.tex}
+\caption{immrep25 homology S/N ($d{=}1$) for all positives vs.\ non-public
+positives (Hamming $\le 1$ to references removed). Removing public TCRs drives S/N
+to the noise floor (dashed line).}
+\label{fig:pub}
+\end{figure}

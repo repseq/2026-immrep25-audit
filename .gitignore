@@ -1,0 +1,35 @@
+# Data policy: immrep25 is public + small -> committed.
+# TCRvdb (matchmakers) is PRIVATE -> never commit (results only).
+# VDJdb is public but large -> fetched via scripts/fetch_vdjdb.sh, not committed.
+dump/matchmakers/
+dump/vdjdb-2026-06-03/
+dump/.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+
+# Heavy intermediates (oracle contract: only summary .dat + figures are committed)
+cache/
+*.pool.tsv
+*.pgen.tsv
+results/*.parquet
+results/cache/
+results/*.log
+
+# LaTeX build artifacts
+appendix/*.aux
+appendix/*.log
+appendix/*.out
+appendix/*.toc
+appendix/*.fls
+appendix/*.fdb_latexmk
+appendix/*.synctex.gz
+appendix/*.bbl
+appendix/*.blg
+appendix/**/*.aux
+
+# OS
+.DS_Store

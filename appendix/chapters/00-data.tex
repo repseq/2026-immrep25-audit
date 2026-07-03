@@ -1,0 +1,50 @@
+\section{Data and design}\label{sec:data}
+
+\paragraph{Cohorts.} Every cohort is reduced to a common per-chain schema
+(one CDR3 with its V/J and epitope) and a paired schema
+($\text{cdr3}\alpha,V\alpha,J\alpha,\text{cdr3}\beta,V\beta,J\beta$, epitope).
+The six cohorts span the expected signal-to-noise (S/N) range:
+
+\begin{center}\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+cohort & definition & role \\
+\midrule
+TCRvdb true  & TCRvdb, $p_{\text{adj}}<10^{-5}$ & experimentally verified (top) \\
+VDJdb HQ     & VDJdb human MHC-I, $\ge 2$ references per (TCR, epitope) & strongly supported \\
+VDJdb LQ     & VDJdb human MHC-I, single reference & weakly supported \\
+TCRvdb false & TCRvdb, $p_{\text{adj}}\ge 10^{-5}$ & experimentally refuted \\
+immrep25 pos & immrep25 \texttt{label}=1 & \textbf{system under test} \\
+OLGA random  & $P_{\text{gen}}$-matched to immrep25 pos & pure-noise floor \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Cohorts draw on VDJdb~\cite{Shugay_2017}, the functionally-validated
+TCRvdb/MATCHMAKERS database~\cite{Messemaker_2025}, the immrep25 unseen-peptide
+benchmark~\cite{Richardson2026}, and an OLGA control built from the TCR generation
+model of Murugan~et~al.~\cite{Murugan_2012}. The immrep25 test set covers 20
+nine-mer peptides that are \emph{absent from VDJdb}, with 50 positives (and 450
+negatives) each; only positives are audited.
+TCRvdb true/false are dominated by the same two epitopes (YLQPRTFLL, GLCTLVAML),
+giving an epitope-matched verified-vs-refuted contrast. Because the number of
+epitopes itself inflates S/N, all cross-cohort comparisons use a \emph{matched
+design}: $E=2$ epitopes $\times\,K=30$ TCRs, bootstrapped (the two-epitope cap is
+imposed by TCRvdb), with permutation nulls making every metric dimensionless.
+
+\paragraph{Pipeline.}
+\begin{center}
+\begin{tikzpicture}[node distance=6mm and 10mm,>=Latex,
+  box/.style={draw,rounded corners,align=center,font=\footnotesize,inner sep=3pt,minimum height=8mm},
+  data/.style={box,fill=blue!6}, proc/.style={box,fill=orange!8}, result/.style={box,fill=green!8}]
+\node[data] (imm) {immrep25\\TCRvdb\\VDJdb};
+\node[proc,right=of imm] (coh) {normalize\\cohorts};
+\node[proc,right=of coh] (olga) {OLGA\\$P_{\text{gen}}$-match};
+\node[proc,above right=4mm and 10mm of olga] (hom) {homology\\S/N};
+\node[proc,below right=4mm and 10mm of olga] (pair) {pairing\\$z$};
+\node[result,right=26mm of olga] (fig) {S/N\\hierarchy};
+\draw[->] (imm)--(coh); \draw[->] (coh)--(olga);
+\draw[->] (olga)--(hom); \draw[->] (olga)--(pair);
+\draw[->] (hom)--(fig); \draw[->] (pair)--(fig);
+\end{tikzpicture}
+\end{center}

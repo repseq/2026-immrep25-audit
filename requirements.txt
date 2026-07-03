@@ -1,0 +1,13 @@
+# Full pipeline runs in ONE environment (conda `dev`, Python 3.12).
+# Interpreter: /opt/homebrew/Caskroom/miniconda/base/envs/dev/bin/python
+# System tools (already present): gnuplot 6.0.4 (tikz/cairolatex terminals),
+#   graphviz CLI (sfdp/neato/dot), TeX Live 2026 (latexmk/lualatex).
+pandas>=3.0
+numpy>=2.0
+scipy>=1.18
+scikit-learn>=1.9
+umap-learn>=0.5
+networkx>=3.6
+matplotlib>=3.10
+seaborn>=0.13
+olga>=1.3

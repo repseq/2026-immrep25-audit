@@ -1,0 +1,7 @@
+cohort,label,n_paired,n_chainA,n_chainB,n_epitopes
+tcrvdb_true,TCRvdb true,306,306,306,2
+vdjdb_hq,VDJdb HQ,4011,3850,3850,115
+vdjdb_lq,VDJdb LQ,79613,104590,140905,1711
+tcrvdb_false,TCRvdb false,308,308,308,2
+immrep25_pos,immrep25 pos,1000,1000,1000,20
+olga_random,OLGA random,999,999,999,20

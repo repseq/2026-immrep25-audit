@@ -1,0 +1,82 @@
+# immrep25 data-quality audit
+
+Does the **immrep25** unseen-peptide benchmark's *positive* TCR–peptide set carry
+epitope-specific signal, or only **noise and publicity**? We answer with two
+biologically-grounded probes — CDR3 **homology** and V/J **chain pairing** —
+calibrated against cohorts of known quality and a generation-probability-matched
+random floor.
+
+![Homology graph per cohort](docs/assets/homology_graph.png)
+
+*Homology graph (TRβ): nodes = CDR3, edges = Hamming ≤ 1, colour = epitope.
+Verified cohorts (VDJdb-HQ, TCRvdb-true) form dense epitope-coloured cliques;
+**immrep25 and the OLGA random control are near-edgeless point clouds**.*
+
+## Outline
+
+1. [**Cohorts**](src/cohorts.py) — six datasets on a common schema, spanning the
+   expected signal-to-noise range (below).
+2. [**Homology test**](src/homology.py) — within- vs between-epitope CDR3
+   near-neighbour enrichment, per chain, with a [graph view](src/homology_graph.py)
+   and a per-epitope breakdown.
+3. [**Pairing test**](src/pairing.py) — per-epitope V/J gene-usage bias and
+   inter-chain mutual information vs permutation nulls.
+4. [**OLGA control**](src/olga_control.py) — pgen-matched random TCRs as the noise floor.
+5. [**Publicity control**](src/publicity.py) — is the residual signal just public TCRs?
+6. [**Appendix**](appendix/immrep25-audit.pdf) — gnuplot + TikZ LaTeX report.
+
+## Result
+
+Matched design (E=2 epitopes × K=30 TCRs), TRβ homology; verified references anchor the axis:
+
+| cohort | homology S/N (β) | gene-bias z | inter-chain MI z |
+|---|--:|--:|--:|
+| VDJdb HQ (≥2 refs) | 285 | 21.4 | 14.1 |
+| TCRvdb true (p_adj<1e-5) | 33 | 10.6 | 5.2 |
+| TCRvdb false (p_adj≥1e-5) | 29 | 2.1 | 7.3 |
+| VDJdb LQ (1 ref) | 15 | 4.3 | 5.7 |
+| **immrep25 positives** | **2.5** | **2.6** | **−0.1** |
+| OLGA random (pgen-matched) | 1.0 | 0.1 | 0.0 |
+
+- immrep25 positives sit **just above the OLGA random floor**, far below every quality cohort, on both chains and both probes.
+- Their only within-epitope homology is **publicity**: 74.5% are within Hamming≤1 of a known VDJdb/TCRvdb TCR; across all 20 epitopes they share just **54** β-neighbours (vs **0** for the OLGA control), concentrated in a few epitopes. Removing public TCRs drops homology S/N to **1.00** (β).
+- **No inter-chain α–β coupling** (MI z ≈ 0), i.e. random pairing.
+
+**Conclusion:** no evidence of epitope-specific signal in the immrep25 positives beyond noise and publicity — consistent with the benchmark's own finding that models cannot predict unseen peptides.
+
+## Reproduce
+
+Single conda env `dev` (Python 3.12) runs everything; gnuplot 6, graphviz, TeX Live
+are used for the appendix. Install: `pip install -r requirements.txt`.
+
+```bash
+bash scripts/fetch_vdjdb.sh   # download public VDJdb release into dump/ (not committed)
+python src/build_olga.py      # ~8 min: pgen-matched OLGA control -> results/olga_control.tsv
+python run_audit.py           # metrics -> results/*.csv, appendix/analysis/*.dat, macros
+python src/figures.py         # matplotlib figures -> results/figures/
+make -C appendix              # gnuplot (tikz) + LaTeX -> appendix/immrep25-audit.pdf
+python tests/test_homology.py # unit tests
+```
+
+`run_audit.py --quick` uses fewer bootstraps for a fast pass.
+
+## Data
+
+- **immrep25** (`dump/immrep25/`) — public, committed. Cite: Richardson et al., *IMMREP25: Unseen Peptides*, bioRxiv 2026, [10.64898/2026.03.30.715276](https://doi.org/10.64898/2026.03.30.715276).
+- **VDJdb** — public, **not committed** (large); fetch with `scripts/fetch_vdjdb.sh` from the [2026-06-11 release](https://github.com/antigenomics/vdjdb-db/releases/tag/2026-06-11-ZENODO). Cite: Shugay et al., *Nucleic Acids Research* 2018, [10.1093/nar/gkx760](https://doi.org/10.1093/nar/gkx760).
+- **TCRvdb / MATCHMAKERS** — **private, never committed** (results only). Cite: Messemaker et al., bioRxiv 2025, [10.1101/2025.04.28.651095](https://doi.org/10.1101/2025.04.28.651095).
+- **Chain pairing** background: Shcherbinin, Belousov & Shugay, *PLoS Comput Biol* 2020, [10.1371/journal.pcbi.1007714](https://doi.org/10.1371/journal.pcbi.1007714).
+- **OLGA** generation model: Murugan et al., *PNAS* 2012, [10.1073/pnas.1212755109](https://doi.org/10.1073/pnas.1212755109).
+
+## Method notes
+
+- **Homology**: within- vs between-epitope CDR3 pairs at Hamming ≤ d (equal-length),
+  as *rates* normalized by `C(N_e,2)` / `[C(N,2)−ΣC(N_e,2)]`; S/N = self-rate /
+  non-self-rate. d=0 isolates publicity, d=1 is the substitution signal. Cohorts are
+  compared at a common E×K matched design (TCRvdb caps E=2), bootstrapped with 95% CIs.
+- **Pairing**: per-epitope V/J gene-usage bias (KL vs background) and Miller–Madow
+  inter-chain mutual information, each as z vs a permutation null (label / pairing shuffle).
+- **OLGA control**: per-chain pgen of immrep25 positives matched by stratified sampling
+  of an OLGA-generated pool; α/β paired at random into immrep-shaped groups.
+
+Authors: Anna E. Koneva & Mikhail Shugay (ISALGO lab) · correspondence: mikhail.shugay@gmail.com
