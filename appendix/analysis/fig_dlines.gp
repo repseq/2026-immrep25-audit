@@ -27,8 +27,8 @@ do for [pane in "A B"] {
   f = sprintf('homology_dlines_TR%s.dat', pane)
   plot f u 1:2 w lp ls 1 t 'TCRvdb true', f u 1:3 w lp ls 2 t 'VDJdb HQ', \
        f u 1:4 w lp ls 3 t 'VDJdb LQ', f u 1:5 w lp ls 4 t 'TCRvdb false', \
-       f u 1:6 w lp ls 5 t 'immrep25', f u 1:7 w lp ls 8 t 'AIRR uniq', \
-       f u 1:8 w lp ls 9 t 'AIRR top', f u 1:9 w lp ls 6 t 'OLGA matched', \
+       f u 1:6 w lp ls 5 t 'immrep25', f u 1:7 w lp ls 8 t 'AIRR rand', \
+       f u 1:8 w lp ls 9 t 'AIRR ladder', f u 1:9 w lp ls 6 t 'OLGA pgen-lad', \
        f u 1:10 w lp ls 7 t 'OLGA rand', 1 w l lc rgb '#444444' dt 2 notitle
 }
 unset multiplot

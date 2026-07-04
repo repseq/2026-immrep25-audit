@@ -13,9 +13,9 @@ set key top left font ",7"
 do for [pane in "A B"] {
   set title (pane eq "A" ? "TCR$\\alpha$" : "TCR$\\beta$")
   plot sprintf('pgen1mm_immrep25_pos_%s.dat', pane) u 1 smooth kdensity bandwidth 0.4 w l lw 3 lc rgb '#ef8a00' t 'immrep25', \
-       sprintf('pgen1mm_olga_matched_%s.dat', pane) u 1 smooth kdensity bandwidth 0.4 w l lw 3 dt 2 lc rgb '#b2182b' t 'OLGA matched', \
+       sprintf('pgen1mm_olga_matched_%s.dat', pane) u 1 smooth kdensity bandwidth 0.4 w l lw 3 dt 2 lc rgb '#b2182b' t 'OLGA pgen-ladder', \
        sprintf('pgen1mm_olga_random_%s.dat', pane) u 1 smooth kdensity bandwidth 0.4 w l lw 2 lc rgb '#777777' t 'OLGA random', \
-       sprintf('pgen1mm_airr_control_%s.dat', pane) u 1 smooth kdensity bandwidth 0.4 w l lw 3 lc rgb '#9e9ac8' t 'AIRR unique', \
-       sprintf('pgen1mm_airr_top_%s.dat', pane) u 1 smooth kdensity bandwidth 0.4 w l lw 3 lc rgb '#6a51a3' t 'AIRR top-freq'
+       sprintf('pgen1mm_airr_control_%s.dat', pane) u 1 smooth kdensity bandwidth 0.4 w l lw 3 lc rgb '#9e9ac8' t 'AIRR random', \
+       sprintf('pgen1mm_airr_top_%s.dat', pane) u 1 smooth kdensity bandwidth 0.4 w l lw 3 lc rgb '#6a51a3' t 'AIRR rank-ladder'
 }
 unset multiplot

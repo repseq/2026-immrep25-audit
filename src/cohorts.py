@@ -22,9 +22,9 @@ COHORT_META = {
     "vdjdb_lq":     {"label": "VDJdb LQ",     "expect": "weak"},
     "tcrvdb_false": {"label": "TCRvdb false", "expect": "noise"},
     "immrep25_pos": {"label": "immrep25 pos", "expect": "test"},
-    "airr_control": {"label": "AIRR unique",  "expect": "real"},
-    "airr_top":     {"label": "AIRR top-freq", "expect": "real"},
-    "olga_matched": {"label": "OLGA pgen-matched", "expect": "noise"},
+    "airr_control": {"label": "AIRR random",  "expect": "real"},
+    "airr_top":     {"label": "AIRR rank-ladder", "expect": "real"},
+    "olga_matched": {"label": "OLGA pgen-ladder", "expect": "noise"},
     "olga_random":  {"label": "OLGA random",  "expect": "noise"},
 }
 

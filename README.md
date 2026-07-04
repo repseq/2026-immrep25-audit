@@ -38,14 +38,20 @@ controls fix the noise floor at S/N=1. TRβ:
 | TCRvdb false (p_adj≥1e-5) | 86 | 0.15 | 0.33 |
 | VDJdb LQ (1 ref) | 30 | 0.96 | 0.44 |
 | **immrep25 positives** | **2.7** | **0.20** | **0.05** |
-| AIRR control (real repertoire) | 1.0 | 0.00 | ~0 |
-| OLGA pgen-matched | 1.0 | 0.01 | ~0 |
-| OLGA random | 1.0 | 0.01 | ~0 |
+| OLGA pgen-ladder (per-epitope pgen-matched) | 0.95 | −0.01 | ~0 |
+| AIRR rank-ladder (frequency-rank bins) | 0.86 | 0.02 | ~0 |
+| AIRR random (real, random labels) | 1.0 | 0.00 | ~0 |
+| OLGA random | 0.97 | 0.00 | ~0 |
 
 - immrep25 positives sit **just above the noise floor** (CI excludes 1) and **one to
   three orders of magnitude below every quality cohort**, on both chains and both probes.
-- The floor is confirmed by three independent controls — two generative (OLGA) and a
-  **real post-thymic-selection repertoire** (AIRR, from [isalgo/airr_control](https://huggingface.co/datasets/isalgo/airr_control)) — all at S/N=1.
+- The floor holds even for **structured** controls that could otherwise manufacture
+  within-epitope homology: an **OLGA pgen-ladder** (each control epitope pgen-matched to
+  the corresponding immrep25 epitope) and an **AIRR rank-ladder** (real clonotypes binned
+  by clone frequency). Neither rises — immrep25's excess is specific to its epitope→TCR
+  assignments (publicity), not to pgen, generation degree, or clone frequency. Strikingly,
+  the AIRR rank-ladder has *more* raw within-group α-neighbors (93) than immrep25 (53) yet
+  S/N 0.86 — homology without epitope concentration.
 - Reported prediction scores agree: IMMREP23 reached median AUC₀.₁ ≳ 0.7 on *seen*
   peptides ([Nielsen 2024](https://doi.org/10.1016/j.immuno.2024.100045)) but IMMREP25's best was macro-AUC₀.₁ = 0.60 on *unseen* — our audit explains why.
 - Their weak within-epitope homology is **publicity**: 74.5% are within Hamming≤1 of a

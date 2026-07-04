@@ -8,19 +8,19 @@ OLGA's wildcard identity (\texttt{compute\_hamming\_dist\_1\_pgen}; terminal anc
 positions skipped). Figure~\ref{fig:pgen1mm} shows the per-chain distributions.
 
 \paragraph{The pgen-matched control also matches degree.} immrep25 and its
-point-$P_{\text{gen}}$-matched OLGA control have essentially identical neighbourhood-pgen
-distributions (median $\Delta\log_{10}\approx 0.01$ on TCR$\beta$, $0.03$ on TCR$\alpha$;
-orange and red curves overlap). Matching the point pgen therefore already matches the
-generation degree, so the control is valid for homology matchability and immrep25's
-residual homology is \emph{not} a neighbourhood-density artefact---consistent with its
-being publicity (\S\ref{sec:publicity}), which is removed by chain, not by degree.
+per-epitope $P_{\text{gen}}$-matched OLGA control (pgen-ladder) have essentially identical
+neighbourhood-pgen distributions (median $\Delta\log_{10}\approx 0.04$ on TCR$\alpha$,
+$0.07$ on TCR$\beta$; orange and red curves overlap). Matching the point pgen therefore
+already matches the generation degree, so the control is valid for homology matchability
+and immrep25's residual homology is \emph{not} a neighbourhood-density artefact---consistent
+with its being publicity (\S\ref{sec:publicity}), which is removed by chain, not by degree.
 
 \paragraph{Degree spans a decade, yet homology S/N stays at the floor.} Absolute degree
 differs strongly with how the real repertoire is sampled, and both extremes are shown.
-Sampled uniformly over \emph{unique} clonotypes (AIRR unique), the repertoire sits at
+Sampled uniformly over \emph{unique} clonotypes (AIRR random), the repertoire sits at
 \emph{lower} neighbourhood pgen than pgen-weighted OLGA generation---its diversity is
 dominated by low-pgen singletons. Sampled as the top clonotypes by \emph{clone
-frequency} (AIRR top-freq), the public, expanded clones give the \emph{highest}
+frequency} (AIRR rank-ladder), the public, expanded clones give the \emph{highest}
 neighbourhood pgen of any cohort (median $\sim\!0.9$ dex above OLGA on TCR$\alpha$),
 confirming that abundant real TCRs are indeed high-degree. Crucially, \emph{both} AIRR
 variants sit at homology S/N ${\approx}1$ (Fig.~\ref{fig:hom}): the S/N is normalised

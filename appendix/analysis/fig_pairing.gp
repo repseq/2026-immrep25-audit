@@ -7,7 +7,7 @@ set ylabel "excess over null (bits)"
 set grid ytics lc rgb '#dddddd'
 set bmargin 4.2
 set xtics out nomirror rotate by 40 right offset 0,-0.1 font ",7"
-set xtics ("TCRvdb true" 0,"VDJdb HQ" 1,"VDJdb LQ" 2,"TCRvdb false" 3,"immrep25" 4,"AIRR uniq" 5,"AIRR top" 6,"OLGA matched" 7,"OLGA rand" 8)
+set xtics ("TCRvdb true" 0,"VDJdb HQ" 1,"VDJdb LQ" 2,"TCRvdb false" 3,"immrep25" 4,"AIRR rand" 5,"AIRR ladder" 6,"OLGA pgen-lad" 7,"OLGA rand" 8)
 set xrange [-0.6:8.6]
 set yrange [-0.2:*]
 set key top right

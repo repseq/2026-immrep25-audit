@@ -115,8 +115,8 @@ def run():
             fh.write("\\texttt{%s} & %d & %d & %d & %.2f \\\\\n" % (r.epitope, r.n, r.mB, r.mA, r.snB))
         fh.write("\\midrule\n")
         summary = [("\\textbf{immrep25 (geom.\\ mean)}", "immrep25_pos"),
-                   ("AIRR unique", "airr_control"), ("AIRR top-freq", "airr_top"),
-                   ("OLGA pgen-matched", "olga_matched")]
+                   ("AIRR random", "airr_control"), ("AIRR rank-ladder", "airr_top"),
+                   ("OLGA pgen-ladder", "olga_matched")]
         for label, cohort in summary:
             if cohort not in coh:
                 continue
@@ -208,6 +208,7 @@ def run():
         "olgaMHomB": H("olga_matched", "B"), "olgaRHomB": H("olga_random", "B"),
         "olgaMHomA": H("olga_matched", "A"), "olgaRHomA": H("olga_random", "A"),
         "airrHomB": H("airr_control", "B"), "airrHomA": H("airr_control", "A"),
+        "airrTHomB": H("airr_top", "B"), "airrTHomA": H("airr_top", "A"),
         "immGene": P("immrep25_pos", "gene_mean"), "immMi": P("immrep25_pos", "mi_mean"),
         "hqGene": P("vdjdb_hq", "gene_mean"), "trueMi": P("tcrvdb_true", "mi_mean"),
         "olgaMGene": P("olga_matched", "gene_mean"), "olgaMMi": P("olga_matched", "mi_mean"),

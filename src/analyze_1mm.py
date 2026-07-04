@@ -19,8 +19,8 @@ ADAT = os.path.join(REPO, "appendix", "analysis")
 FIGS = os.path.join(RESULTS, "figures")
 
 COHORTS = ["immrep25_pos", "airr_control", "airr_top", "olga_matched", "olga_random"]
-LAB = {"immrep25_pos": "immrep25", "airr_control": "AIRR unique", "airr_top": "AIRR top-freq",
-       "olga_matched": "OLGA matched", "olga_random": "OLGA random"}
+LAB = {"immrep25_pos": "immrep25", "airr_control": "AIRR random", "airr_top": "AIRR rank-ladder",
+       "olga_matched": "OLGA pgen-ladder", "olga_random": "OLGA random"}
 COL = {"immrep25_pos": "#ef8a00", "airr_control": "#9e9ac8", "airr_top": "#6a51a3",
        "olga_matched": "#b2182b", "olga_random": "#777777"}
 

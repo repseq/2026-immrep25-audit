@@ -15,9 +15,10 @@ VDJdb HQ     & VDJdb human MHC-I, $\ge 2$ references per (TCR, epitope) & strong
 VDJdb LQ     & VDJdb human MHC-I, single reference & weakly supported \\
 TCRvdb false & TCRvdb, $p_{\text{adj}}\ge 10^{-5}$ & experimentally refuted \\
 immrep25 pos & immrep25 \texttt{label}=1 & \textbf{system under test} \\
-AIRR control & real bulk repertoire (isalgo/airr\_control) & real-data floor \\
-OLGA pgen-matched & $P_{\text{gen}}$-matched to immrep25 pos & noise floor \\
-OLGA random  & raw OLGA generation & noise floor \\
+AIRR random & real repertoire (isalgo/airr\_control), random labels & real-data floor \\
+AIRR rank-ladder & top-1000 real clonotypes; epitope $=$ frequency-rank bin of 50 & structured real control \\
+OLGA pgen-ladder & 50 per epitope, $P_{\text{gen}}$-matched to that immrep epitope & structured null \\
+OLGA random  & raw OLGA generation, random labels & noise floor \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -38,11 +39,18 @@ others (each epitope with $\ge 30$ records vs.\ the rest of its cohort) and then
 aggregated to a dataset value---geometric mean $\pm$ 95\% CI for homology S/N, mean
 $\pm$ 95\% CI for pairing---across epitopes. The signal therefore attaches to
 individual epitopes and the reported error bars are the epitope-to-epitope spread
-($n$ = number of qualifying epitopes); no bootstrap resampling is used. Three controls fix
-the noise floor: two OLGA controls (raw random draws, and draws whose per-chain
-generation probability is matched to immrep25 so chance matchability is controlled) and
-a real \emph{post-thymic-selection} bulk repertoire (AIRR control), all partitioned
-into synthetic epitope groups of the same shape as immrep25.
+($n$ = number of qualifying epitopes); no bootstrap resampling is used.
+
+\paragraph{Controls with realistic epitope structure.} Random synthetic labels give
+S/N${=}1$ by construction, so we also build controls whose \emph{epitope grouping is
+structured}, to check whether any generic property could manufacture within-epitope
+homology. \textbf{OLGA pgen-ladder}: for each of the 20 immrep25 epitopes we draw 50
+OLGA sequences whose per-chain $P_{\text{gen}}$ matches \emph{that} epitope's positives
+(so each control epitope inherits the real epitope's generation degree).
+\textbf{AIRR rank-ladder}: the top 1000 real clonotypes by clone frequency, cut into 20
+consecutive rank bins of 50 that serve as epitopes (so each ``epitope'' is a set of
+equally-public clones). Two random-label floors (OLGA random, AIRR random) are kept for
+reference.
 
 \paragraph{Pipeline.}
 \begin{center}
@@ -51,12 +59,15 @@ into synthetic epitope groups of the same shape as immrep25.
   data/.style={box,fill=blue!6}, proc/.style={box,fill=orange!8}, result/.style={box,fill=green!8}]
 \node[data] (imm) {immrep25\\TCRvdb\\VDJdb};
 \node[proc,right=of imm] (coh) {normalize\\cohorts};
-\node[proc,right=of coh] (olga) {OLGA\\$P_{\text{gen}}$-match};
-\node[proc,above right=4mm and 10mm of olga] (hom) {homology\\S/N};
-\node[proc,below right=4mm and 10mm of olga] (pair) {pairing\\$z$};
-\node[result,right=26mm of olga] (fig) {S/N\\hierarchy};
-\draw[->] (imm)--(coh); \draw[->] (coh)--(olga);
-\draw[->] (olga)--(hom); \draw[->] (olga)--(pair);
-\draw[->] (hom)--(fig); \draw[->] (pair)--(fig);
+\node[proc,above right=3mm and 9mm of coh] (airr) {AIRR\\rank-ladder};
+\node[proc,below right=3mm and 9mm of coh] (olga) {OLGA\\pgen-ladder};
+\node[proc,right=32mm of coh] (hom) {homology\\S/N};
+\node[proc,below=8mm of hom] (pair) {pairing\\$z$};
+\node[result,right=10mm of hom] (fig) {S/N\\hierarchy};
+\draw[->] (imm)--(coh);
+\draw[->] (coh)--(airr); \draw[->] (coh)--(olga);
+\draw[->] (airr)--(hom); \draw[->] (olga)--(pair);
+\draw[->] (coh)--(hom); \draw[->] (coh)--(pair);
+\draw[->] (hom)--(fig); \draw[->] (pair.east)-|(fig);
 \end{tikzpicture}
 \end{center}

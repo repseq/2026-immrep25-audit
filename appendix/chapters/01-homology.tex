@@ -22,15 +22,18 @@ S/N $\gg 1$, noise $\Rightarrow$ S/N $\approx 1$.
 \paragraph{Result.} Figure~\ref{fig:hom} orders the cohorts:
 VDJdb-HQ $>$ TCRvdb-true $>$ TCRvdb-false $>$ VDJdb-LQ $\gg$ immrep25 $>$ OLGA.
 On TCR$\beta$ the verified cohorts reach S/N $=\hqHomB$ (VDJdb-HQ) and $\trueHomB$
-(TCRvdb-true), whereas immrep25 positives give only $\immHomB$ and all three controls
-sit at the floor (OLGA $\olgaMHomB$ matched / $\olgaRHomB$ raw; AIRR $\airrHomB$). The
-same holds on TCR$\alpha$ (immrep25 $\immHomA$ vs.\ OLGA $\olgaMHomA$, AIRR $\airrHomA$).
-Notably the real AIRR repertoire---despite genuine thymic selection and public,
-convergent sequences---also sits at $1$, confirming the floor is not an artefact of the
-generative model. immrep25's CI excludes $1$
-but lies one to three orders of magnitude below every quality cohort. As the
-substitution radius grows (Fig.~\ref{fig:dlines}) the verified cohorts stay high
-while immrep25 and OLGA remain near the floor across $d=1,2,3$.
+(TCRvdb-true), whereas immrep25 positives give only $\immHomB$ and \emph{every} control
+sits at the floor---including the two structured ones: the OLGA pgen-ladder
+($\olgaMHomB$), whose epitopes match immrep25's per-epitope generation degree, and the
+AIRR rank-ladder ($\airrTHomB$), whose epitopes are bins of equally-public real
+clonotypes. Neither reproduces immrep25's within-epitope homology, so its excess is not
+manufactured by generation degree, by clone frequency, or by the real thymic-selection
+process (AIRR random $\airrHomB$); it is specific to immrep25's epitope$\to$TCR
+assignments (i.e.\ publicity, \S\ref{sec:publicity}). The same holds on TCR$\alpha$
+(immrep25 $\immHomA$). immrep25's CI excludes $1$ but lies one to three orders of
+magnitude below every quality cohort. As the substitution radius grows
+(Fig.~\ref{fig:dlines}) the verified cohorts stay high while immrep25 and all controls
+remain near the floor across $d=1,2,3$.
 
 \begin{figure}[h]\centering
 \input{analysis/fig_homology.tex}
@@ -43,7 +46,7 @@ whiskers = 95\% CI = between-epitope spread). Dashed line: noise floor S/N${=}1$
 \begin{figure}[h]\centering
 \input{analysis/fig_dlines.tex}
 \caption{Homology S/N vs.\ substitution radius $d=1,2,3$ (one-vs-many geometric mean).
-Verified cohorts stay high; immrep25 and both OLGA controls track the floor.}
+Verified cohorts stay high; immrep25 and all controls track the floor.}
 \label{fig:dlines}
 \end{figure}
 
@@ -56,7 +59,10 @@ total they contribute only $\immWithinB$ (TCR$\beta$) / $\immWithinA$ (TCR$\alph
 within-epitope Hamming-$1$ neighbours --- versus $\olgaWithinB$ / $\olgaWithinA$ for
 the $P_{\text{gen}}$-matched OLGA control and tens of thousands for the VDJdb cohorts
 --- and even that handful is concentrated in a few epitopes (e.g.\ YLFNADIWI) and is
-entirely public (\S\ref{sec:publicity}).
+entirely public (\S\ref{sec:publicity}). Tellingly, the AIRR rank-ladder carries
+\emph{more} within-group $\alpha$-neighbours ($93$) than immrep25 ($53$) yet its S/N
+stays below $1$: those neighbours are public clones scattered across rank bins, so raw
+homology without epitope concentration does not lift the S/N.
 
 \begin{figure}[h]\centering
 \input{analysis/fig_beeswarm.tex}
@@ -69,7 +75,8 @@ pooled cross-epitope (non-self) rate; the vertical gap is the homology S/N.}
 \begin{table}[h]\centering\small
 \input{analysis/immrep_epitope_table.tex}
 \caption{immrep25 positives by epitope ($n$ TCRs) and their count of within-epitope
-Hamming-$1$ CDR3 neighbours per chain, versus the OLGA control. Sorted by TCR$\beta$.}
+Hamming-$1$ CDR3 neighbours per chain and $\beta$ S/N, versus the structured/random
+controls. Sorted by $\beta$ S/N.}
 \label{tab:epi}
 \end{table}
 
@@ -77,11 +84,13 @@ Hamming-$1$ CDR3 neighbours per chain, versus the OLGA control. Sorted by TCR$\b
 edge-density of the homology graph (nodes${=}$CDR3, edges${=}$Hamming${\le}1$; all
 epitopes with $\ge 30$ records). Figure~\ref{fig:homgraph} renders it (graphviz
 \texttt{sfdp} layout): the verified cohorts form dense epitope-coloured cliques, while
-immrep25 and both OLGA controls are near-edgeless point clouds.
+the controls (even where they carry edges, e.g.\ the public AIRR rank-ladder) show no
+epitope-coloured clustering---their few edges cross colours rather than forming cliques.
 
 \begin{figure}[h]\centering
 \includegraphics[width=\linewidth]{../results/figures/fig_homology_graph_TRB.pdf}
 \caption{TCR$\beta$ homology graph per cohort (all epitopes $\ge 30$ records). Verified
-cohorts form dense epitope-coloured cliques; immrep25 and OLGA are near-edgeless.}
+cohorts form dense epitope-coloured cliques; the controls show no epitope-coloured
+clustering (the AIRR rank-ladder has edges from public clones, but they cross colours).}
 \label{fig:homgraph}
 \end{figure}
