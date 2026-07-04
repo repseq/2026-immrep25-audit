@@ -32,14 +32,16 @@ onto it.}
 \label{fig:ladder}
 \end{figure}
 
-\paragraph{Relation to reported prediction scores.} The IMMREP23 challenge reported
-that specificity can be predicted for \emph{seen} peptides with useful accuracy
-(median AUC$_{0.1}\gtrsim 0.7$)~\cite{Nielsen_2024}, whereas IMMREP25 found no method
-exceeded a best macro-AUC$_{0.1}$ of $0.60$ on \emph{unseen} peptides, barely above
-random~\cite{Richardson2026}. Our structural audit accounts for this gap without
-running any predictor: the unseen-peptide positives carry no epitope-specific homology
-or pairing signal beyond publicity, so a model has nothing epitope-specific to latch
-onto and can only exploit similarity to previously seen TCRs---which novel epitopes, by
+\paragraph{Relation to reported prediction scores.} The earlier IMMREP23
+challenge~\cite{Nielsen_2024} was built largely on curated VDJdb-quality data and
+reported that specificity can be predicted for its \emph{seen} peptides with useful
+accuracy (median AUC$_{0.1}\gtrsim 0.7$)---consistent with our finding that the VDJdb
+cohorts carry strong homology and pairing signal (Figs.~\ref{fig:hom},~\ref{fig:pair}).
+IMMREP25, in contrast, found no method exceeded a best macro-AUC$_{0.1}$ of $0.60$ on
+\emph{unseen} peptides~\cite{Richardson2026}. Our audit accounts for the gap without
+running any predictor: the unseen-peptide positives carry no epitope-specific signal
+beyond publicity, so a model has nothing epitope-specific to latch onto and can only
+exploit similarity to previously seen, VDJdb-like TCRs---which novel epitopes, by
 construction, do not provide.
 
 \paragraph{Caveats.} TCRvdb true/false separate less than expected because

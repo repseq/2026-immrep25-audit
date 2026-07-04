@@ -1,0 +1,34 @@
+\section{Neighbourhood pgen (generation degree)}\label{sec:degree}
+
+Point $P_{\text{gen}}$ controls how likely a single CDR3 is to be generated, but chance
+homology depends on how many likely \emph{neighbours} a sequence has. Following
+mirpy~\cite{mirpy}, we quantify this with the \emph{1-mm neighbourhood pgen}---the
+generation probability of all CDR3s within Hamming distance $1$, computed exactly with
+OLGA's wildcard identity (\texttt{compute\_hamming\_dist\_1\_pgen}; terminal anchor
+positions skipped). Figure~\ref{fig:pgen1mm} shows the per-chain distributions.
+
+\paragraph{The pgen-matched control also matches degree.} immrep25 and its
+point-$P_{\text{gen}}$-matched OLGA control have essentially identical neighbourhood-pgen
+distributions (median $\Delta\log_{10}\approx 0.01$ on TCR$\beta$, $0.03$ on TCR$\alpha$;
+orange and red curves overlap). Matching the point pgen therefore already matches the
+generation degree, so the control is valid for homology matchability and immrep25's
+residual homology is \emph{not} a neighbourhood-density artefact---consistent with its
+being publicity (\S\ref{sec:publicity}), which is removed by chain, not by degree.
+
+\paragraph{Why real data does not ``show more degree'' here.} The homology S/N is
+normalised against a random re-partition of each cohort, so it measures epitope
+\emph{specificity}, not absolute degree; any cohort with random group labels gives
+S/N${=}1$ irrespective of how dense its neighbourhoods are. Absolute degree does differ,
+but in the opposite direction to naive expectation: the real AIRR repertoire---sampled
+uniformly over \emph{unique} clonotypes---sits at \emph{lower} neighbourhood pgen than
+pgen-weighted OLGA generation (median $\sim\!0.8$ dex lower on TCR$\alpha$). Repertoire
+diversity is dominated by low-pgen singletons; the high-degree public clones are a small
+minority by unique count and would dominate only under abundance weighting.
+
+\begin{figure}[h]\centering
+\input{analysis/fig_pgen1mm.tex}
+\caption{1-mm neighbourhood $P_{\text{gen}}$ (kernel density) per chain. immrep25
+overlaps its pgen-matched OLGA control (degree is controlled); the real AIRR repertoire
+sits at lower degree than pgen-weighted OLGA generation.}
+\label{fig:pgen1mm}
+\end{figure}

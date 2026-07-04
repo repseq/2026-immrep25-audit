@@ -53,6 +53,11 @@ controls fix the noise floor at S/N=1. TRβ:
   **0** for the OLGA control), concentrated in a few epitopes (YLFNADIWI alone = 20).
   Removing public TCRs drops homology S/N to **1.00** (β) / 1.37 (α).
 - **Negligible inter-chain α–β coupling** (0.05 bits vs ~1 bit for verified cohorts).
+- **Degree check (1-mm neighborhood pgen, à la mirpy):** immrep25 overlaps its point-pgen-matched
+  OLGA control (Δ median ≈ 0.01–0.03 dex), so the control captures generation *degree* too —
+  the residual homology is not a density artifact. Counterintuitively, the real AIRR repertoire
+  (unique clonotypes) has *lower* neighborhood pgen than pgen-weighted OLGA; the S/N floor is
+  normalized against random partitions, so it reflects epitope-specificity, not absolute degree.
 
 **Conclusion:** no meaningful epitope-specific signal in the immrep25 positives beyond
 noise and publicity — consistent with the benchmark's own finding that models cannot
@@ -70,6 +75,7 @@ bash scripts/gen_olga_pool.sh      # 100k/chain OLGA pool with pgen, in parallel
 python src/build_olga.py           # OLGA random + pgen-matched cohorts -> results/olga_*.tsv
 python src/build_airr.py           # AIRR real-repertoire control -> results/airr_control.tsv
 python run_audit.py                # metrics -> results/*.csv, appendix/analysis/*.dat, macros
+python src/compute_1mm.py && python src/analyze_1mm.py   # 1-mm neighborhood pgen (degree check)
 python src/figures.py              # matplotlib figures -> results/figures/
 make -C appendix                   # gnuplot (tikz) + LaTeX -> appendix/immrep25-audit.pdf
 python tests/test_homology.py      # unit tests
