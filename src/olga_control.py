@@ -93,6 +93,8 @@ def pgen_match(target_pgen: np.ndarray, pool: pd.DataFrame, n_target: int,
             continue
         picks.append(rng.choice(cand, want, replace=cand.size < want))
     idx = np.concatenate(picks) if picks else np.array([], int)
+    if len(idx) < n_target:                       # top up rounding shortfall -> exactly n_target
+        idx = np.concatenate([idx, rng.choice(len(pool), n_target - len(idx), replace=True)])
     rng.shuffle(idx)
     return pool.iloc[idx[:n_target]].reset_index(drop=True)
 

@@ -20,14 +20,15 @@ set style line 4 lc rgb '#d6604d' lw 2 pt 5
 set style line 5 lc rgb '#ef8a00' lw 3 pt 9
 set style line 6 lc rgb '#b2182b' lw 2 pt 11
 set style line 7 lc rgb '#777777' lw 2 pt 13
-set style line 8 lc rgb '#756bb1' lw 2 pt 3
+set style line 8 lc rgb '#9e9ac8' lw 2 pt 3
+set style line 9 lc rgb '#6a51a3' lw 2 pt 4
 do for [pane in "A B"] {
   set title (pane eq "A" ? "TCR$\\alpha$" : "TCR$\\beta$")
   f = sprintf('homology_dlines_TR%s.dat', pane)
   plot f u 1:2 w lp ls 1 t 'TCRvdb true', f u 1:3 w lp ls 2 t 'VDJdb HQ', \
        f u 1:4 w lp ls 3 t 'VDJdb LQ', f u 1:5 w lp ls 4 t 'TCRvdb false', \
-       f u 1:6 w lp ls 5 t 'immrep25', f u 1:7 w lp ls 8 t 'AIRR ctrl', \
-       f u 1:8 w lp ls 6 t 'OLGA matched', f u 1:9 w lp ls 7 t 'OLGA rand', \
-       1 w l lc rgb '#444444' dt 2 notitle
+       f u 1:6 w lp ls 5 t 'immrep25', f u 1:7 w lp ls 8 t 'AIRR uniq', \
+       f u 1:8 w lp ls 9 t 'AIRR top', f u 1:9 w lp ls 6 t 'OLGA matched', \
+       f u 1:10 w lp ls 7 t 'OLGA rand', 1 w l lc rgb '#444444' dt 2 notitle
 }
 unset multiplot

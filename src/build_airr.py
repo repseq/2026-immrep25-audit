@@ -41,21 +41,44 @@ def reservoir(path, n, seed):
     return pd.DataFrame(res, columns=["cdr3", "v", "j"])
 
 
-if __name__ == "__main__":
-    import numpy as np
-    rng = np.random.default_rng(42)
-    imm = build_cohorts()["immrep25_pos"]["paired"]
-    n_tcr, n_ep = len(imm), imm.epitope.nunique()
-    a = reservoir(os.path.join(AIRR, "human.tra.aa.tsv.gz"), n_tcr, 42).reset_index(drop=True)
-    b = reservoir(os.path.join(AIRR, "human.trb.aa.tsv.gz"), n_tcr, 43).reset_index(drop=True)
+def top_by_frequency(path, n):
+    """First n valid (cdr3, v, j) rows -- vdjtools .aa is sorted by count descending."""
+    res = []
+    with gzip.open(path, "rt") as f:
+        next(f)
+        for line in f:
+            p = line.rstrip("\n").split("\t")
+            if len(p) < 7 or not valid_cdr3(p[3]):
+                continue
+            res.append((p[3], canon_gene(p[4]), canon_gene(p[6])))
+            if len(res) >= n:
+                break
+    return pd.DataFrame(res, columns=["cdr3", "v", "j"])
+
+
+def _assemble(a, b, name, n_ep, rng):
     n = min(len(a), len(b)); a, b = a.iloc[:n], b.iloc[:n]
     order = rng.permutation(n); grp = np.arange(n) % n_ep
-    out = pd.DataFrame({
-        "cohort": "airr_control", "tcr_id": ["airr_%d" % i for i in range(n)],
-        "epitope": ["airr_ep%02d" % g for g in grp],
+    return pd.DataFrame({
+        "cohort": name, "tcr_id": ["%s_%d" % (name, i) for i in range(n)],
+        "epitope": ["%s_ep%02d" % (name, g) for g in grp],
         "cdr3a": a.cdr3.values, "va": a.v.values, "ja": a.j.values,
         "cdr3b": b.cdr3.values[order], "vb": b.v.values[order], "jb": b.j.values[order],
     })
-    out.to_csv(os.path.join(RESULTS, "airr_control.tsv"), sep="\t", index=False)
-    print("built airr_control: %d pairs" % n)
-    print(out.head(3).to_string())
+
+
+if __name__ == "__main__":
+    import numpy as np
+    imm = build_cohorts()["immrep25_pos"]["paired"]
+    n_tcr, n_ep = len(imm), imm.epitope.nunique()
+    fa = os.path.join(AIRR, "human.tra.aa.tsv.gz"); fb = os.path.join(AIRR, "human.trb.aa.tsv.gz")
+    # uniform over unique clonotypes
+    ua, ub = reservoir(fa, n_tcr, 42), reservoir(fb, n_tcr, 43)
+    _assemble(ua, ub, "airr_control", n_ep, np.random.default_rng(42)).to_csv(
+        os.path.join(RESULTS, "airr_control.tsv"), sep="\t", index=False)
+    # top-N by clone frequency (abundance-weighted)
+    ta, tb = top_by_frequency(fa, n_tcr), top_by_frequency(fb, n_tcr)
+    _assemble(ta, tb, "airr_top", n_ep, np.random.default_rng(44)).to_csv(
+        os.path.join(RESULTS, "airr_top.tsv"), sep="\t", index=False)
+    print("built airr_control (unique, n=%d) + airr_top (top-freq, n=%d)" %
+          (min(len(ua), len(ub)), min(len(ta), len(tb))))

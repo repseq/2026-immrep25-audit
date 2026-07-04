@@ -15,20 +15,25 @@ generation degree, so the control is valid for homology matchability and immrep2
 residual homology is \emph{not} a neighbourhood-density artefact---consistent with its
 being publicity (\S\ref{sec:publicity}), which is removed by chain, not by degree.
 
-\paragraph{Why real data does not ``show more degree'' here.} The homology S/N is
-normalised against a random re-partition of each cohort, so it measures epitope
-\emph{specificity}, not absolute degree; any cohort with random group labels gives
-S/N${=}1$ irrespective of how dense its neighbourhoods are. Absolute degree does differ,
-but in the opposite direction to naive expectation: the real AIRR repertoire---sampled
-uniformly over \emph{unique} clonotypes---sits at \emph{lower} neighbourhood pgen than
-pgen-weighted OLGA generation (median $\sim\!0.8$ dex lower on TCR$\alpha$). Repertoire
-diversity is dominated by low-pgen singletons; the high-degree public clones are a small
-minority by unique count and would dominate only under abundance weighting.
+\paragraph{Degree spans a decade, yet homology S/N stays at the floor.} Absolute degree
+differs strongly with how the real repertoire is sampled, and both extremes are shown.
+Sampled uniformly over \emph{unique} clonotypes (AIRR unique), the repertoire sits at
+\emph{lower} neighbourhood pgen than pgen-weighted OLGA generation---its diversity is
+dominated by low-pgen singletons. Sampled as the top clonotypes by \emph{clone
+frequency} (AIRR top-freq), the public, expanded clones give the \emph{highest}
+neighbourhood pgen of any cohort (median $\sim\!0.9$ dex above OLGA on TCR$\alpha$),
+confirming that abundant real TCRs are indeed high-degree. Crucially, \emph{both} AIRR
+variants sit at homology S/N ${\approx}1$ (Fig.~\ref{fig:hom}): the S/N is normalised
+against a random re-partition of each cohort, so it measures epitope \emph{specificity},
+not absolute degree. Generation degree and epitope-specific convergence are therefore
+distinct axes---immrep25 is elevated on neither beyond publicity.
 
 \begin{figure}[h]\centering
 \input{analysis/fig_pgen1mm.tex}
 \caption{1-mm neighbourhood $P_{\text{gen}}$ (kernel density) per chain. immrep25
-overlaps its pgen-matched OLGA control (degree is controlled); the real AIRR repertoire
-sits at lower degree than pgen-weighted OLGA generation.}
+overlaps its pgen-matched OLGA control (degree is controlled). The real AIRR repertoire
+spans a decade of degree by sampling---lowest for unique clonotypes, highest for the
+abundant top-frequency clones---yet both sit at homology S/N${\approx}1$
+(Fig.~\ref{fig:hom}).}
 \label{fig:pgen1mm}
 \end{figure}

@@ -55,9 +55,10 @@ controls fix the noise floor at S/N=1. TRβ:
 - **Negligible inter-chain α–β coupling** (0.05 bits vs ~1 bit for verified cohorts).
 - **Degree check (1-mm neighborhood pgen, à la mirpy):** immrep25 overlaps its point-pgen-matched
   OLGA control (Δ median ≈ 0.01–0.03 dex), so the control captures generation *degree* too —
-  the residual homology is not a density artifact. Counterintuitively, the real AIRR repertoire
-  (unique clonotypes) has *lower* neighborhood pgen than pgen-weighted OLGA; the S/N floor is
-  normalized against random partitions, so it reflects epitope-specificity, not absolute degree.
+  the residual homology is not a density artifact. Real repertoire degree spans a decade by
+  sampling: **AIRR unique** clonotypes are *lower* degree than OLGA, **AIRR top-freq** (abundant
+  public clones) are the *highest* of any cohort — yet **both sit at homology S/N≈1**. The S/N
+  is normalized against random partitions, so it reflects epitope-specificity, not degree.
 
 **Conclusion:** no meaningful epitope-specific signal in the immrep25 positives beyond
 noise and publicity — consistent with the benchmark's own finding that models cannot

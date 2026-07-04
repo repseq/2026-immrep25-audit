@@ -47,15 +47,18 @@ if __name__ == "__main__":
     from cohorts import build_cohorts
     import time
     coh = build_cohorts(include_olga=True)
-    cohorts = ["immrep25_pos", "olga_matched", "olga_random", "airr_control"]
+    cohorts = ["immrep25_pos", "olga_matched", "olga_random", "airr_control", "airr_top"]
     nproc = int(sys.argv[1]) if len(sys.argv) > 1 else 8
     for name in cohorts:
         for chain in ("A", "B"):
+            out = os.path.join(CACHE, "pgen1mm_%s_%s.tsv" % (name, chain))
+            if os.path.exists(out):        # reuse cached (only new cohorts recompute)
+                continue
             col = "cdr3a" if chain == "A" else "cdr3b"
             seqs = coh[name]["paired"][col].tolist()
             t = time.time()
             df = compute(seqs, chain, nproc)
-            df.to_csv(os.path.join(CACHE, "pgen1mm_%s_%s.tsv" % (name, chain)), sep="\t", index=False)
+            df.to_csv(out, sep="\t", index=False)
             print("%-16s TR%s: n=%d  %.0fs  med log10 pgen=%.2f  pgen1mm=%.2f" % (
                 name, chain, len(df), time.time() - t,
                 np.median(np.log10(df.pgen[df.pgen > 0])),

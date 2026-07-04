@@ -18,10 +18,10 @@ RESULTS = os.path.join(REPO, "results")
 ADAT = os.path.join(REPO, "appendix", "analysis")
 FIGS = os.path.join(RESULTS, "figures")
 
-COHORTS = ["immrep25_pos", "airr_control", "olga_matched", "olga_random"]
-LAB = {"immrep25_pos": "immrep25", "airr_control": "AIRR", "olga_matched": "OLGA matched",
-       "olga_random": "OLGA random"}
-COL = {"immrep25_pos": "#ef8a00", "airr_control": "#756bb1",
+COHORTS = ["immrep25_pos", "airr_control", "airr_top", "olga_matched", "olga_random"]
+LAB = {"immrep25_pos": "immrep25", "airr_control": "AIRR unique", "airr_top": "AIRR top-freq",
+       "olga_matched": "OLGA matched", "olga_random": "OLGA random"}
+COL = {"immrep25_pos": "#ef8a00", "airr_control": "#9e9ac8", "airr_top": "#6a51a3",
        "olga_matched": "#b2182b", "olga_random": "#777777"}
 
 
@@ -70,8 +70,7 @@ if __name__ == "__main__":
     print("\n[key contrasts, median log10 1-mm pgen]")
     for chain in ("A", "B"):
         s = summ[summ.chain == chain].set_index("cohort")["med_log_pgen1mm"]
-        print("  TR%s: immrep=%.2f  OLGA-matched=%.2f  (immrep-matched=%+.2f) | AIRR=%.2f  OLGA-random=%.2f  (AIRR-random=%+.2f)"
+        print("  TR%s: immrep=%.2f OLGA-m=%.2f (imm-m=%+.2f) | AIRR-uniq=%.2f AIRR-top=%.2f OLGA-r=%.2f"
               % (chain, s.get("immrep25_pos", np.nan), s.get("olga_matched", np.nan),
                  s.get("immrep25_pos", np.nan) - s.get("olga_matched", np.nan),
-                 s.get("airr_control", np.nan), s.get("olga_random", np.nan),
-                 s.get("airr_control", np.nan) - s.get("olga_random", np.nan)))
+                 s.get("airr_control", np.nan), s.get("airr_top", np.nan), s.get("olga_random", np.nan)))

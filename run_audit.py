@@ -104,20 +104,27 @@ def run():
     peB = per_ep[("immrep25_pos", "B")][["epitope", "n", "m1", "sn1"]].rename(columns={"m1": "mB", "sn1": "snB"})
     peA = per_ep[("immrep25_pos", "A")][["epitope", "m1"]].rename(columns={"m1": "mA"})
     imm_tab = peB.merge(peA, on="epitope").sort_values("snB", ascending=False)
-    om = {ch: int(per_ep[("olga_matched", ch)].m1.sum()) if ("olga_matched", ch) in per_ep else 0 for ch in "AB"}
-    olga_snB = dataset_sn(per_ep[("olga_matched", "B")], 1)["sn"]
+    def _srow(cohort):
+        peb, pea = per_ep[(cohort, "B")], per_ep[(cohort, "A")]
+        return (len(coh[cohort]["paired"]), int(peb.m1.sum()), int(pea.m1.sum()),
+                dataset_sn(peb, 1)["sn"])
     with open(os.path.join(ADAT, "immrep_epitope_table.tex"), "w") as fh:
         fh.write("\\begin{tabular}{lrrrr}\n\\toprule\n")
         fh.write("epitope & $n$ & $\\beta$ nbrs & $\\alpha$ nbrs & $\\beta$ S/N \\\\\n\\midrule\n")
         for _, r in imm_tab.iterrows():
             fh.write("\\texttt{%s} & %d & %d & %d & %.2f \\\\\n" % (r.epitope, r.n, r.mB, r.mA, r.snB))
-        fh.write("\\midrule\n\\textbf{immrep25 (geom.\\ mean)} & %d & %d & %d & %.2f \\\\\n" %
-                 (int(imm_tab.n.sum()), int(imm_tab.mB.sum()), int(imm_tab.mA.sum()),
-                  dataset_sn(per_ep[("immrep25_pos", "B")], 1)["sn"]))
-        fh.write("OLGA pgen-matched & %d & %d & %d & %.2f \\\\\n\\bottomrule\n\\end{tabular}\n" %
-                 (len(coh["olga_matched"]["paired"]) if "olga_matched" in coh else 0,
-                  om["B"], om["A"], olga_snB))
-    imm_within = (int(imm_tab.mB.sum()), int(imm_tab.mA.sum()), om["B"], om["A"])
+        fh.write("\\midrule\n")
+        summary = [("\\textbf{immrep25 (geom.\\ mean)}", "immrep25_pos"),
+                   ("AIRR unique", "airr_control"), ("AIRR top-freq", "airr_top"),
+                   ("OLGA pgen-matched", "olga_matched")]
+        for label, cohort in summary:
+            if cohort not in coh:
+                continue
+            n, mb, ma, sn = _srow(cohort)
+            fh.write("%s & %d & %d & %d & %.2f \\\\\n" % (label, n, mb, ma, sn))
+        fh.write("\\bottomrule\n\\end{tabular}\n")
+    om = _srow("olga_matched")
+    imm_within = (int(imm_tab.mB.sum()), int(imm_tab.mA.sum()), om[1], om[2])
 
     # ---------------- pairing (one-vs-many, excess bits) ----------------
     pair_rows = []
