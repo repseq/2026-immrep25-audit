@@ -27,22 +27,31 @@ Verified cohorts (VDJdb-HQ, TCRvdb-true) form dense epitope-coloured cliques;
 
 ## Result
 
-Matched design (E=2 epitopes × K=30 TCRs), TRβ homology; verified references anchor the axis:
+**One-vs-many** per epitope (each epitope with ≥30 records scored vs. the rest of its
+cohort), aggregated across epitopes (geometric mean ± 95% CI; no bootstrap). Two OLGA
+controls fix the noise floor at S/N=1. TRβ:
 
-| cohort | homology S/N (β) | gene-bias z | inter-chain MI z |
+| cohort | homology S/N (β) | gene-bias (bits) | inter-chain MI (bits) |
 |---|--:|--:|--:|
-| VDJdb HQ (≥2 refs) | 285 | 21.4 | 14.1 |
-| TCRvdb true (p_adj<1e-5) | 33 | 10.6 | 5.2 |
-| TCRvdb false (p_adj≥1e-5) | 29 | 2.1 | 7.3 |
-| VDJdb LQ (1 ref) | 15 | 4.3 | 5.7 |
-| **immrep25 positives** | **2.5** | **2.6** | **−0.1** |
-| OLGA random (pgen-matched) | 1.0 | 0.1 | 0.0 |
+| VDJdb HQ (≥2 refs, either chain) | 1756 | 1.62 | 1.29 |
+| TCRvdb true (p_adj<1e-5) | 496 | 0.41 | 1.04 |
+| TCRvdb false (p_adj≥1e-5) | 86 | 0.15 | 0.33 |
+| VDJdb LQ (1 ref) | 30 | 0.96 | 0.44 |
+| **immrep25 positives** | **2.7** | **0.20** | **0.05** |
+| OLGA pgen-matched | 1.0 | 0.01 | ~0 |
+| OLGA random | 1.0 | 0.01 | ~0 |
 
-- immrep25 positives sit **just above the OLGA random floor**, far below every quality cohort, on both chains and both probes.
-- Their only within-epitope homology is **publicity**: 74.5% are within Hamming≤1 of a known VDJdb/TCRvdb TCR; across all 20 epitopes they share just **54** β-neighbours (vs **0** for the OLGA control), concentrated in a few epitopes. Removing public TCRs drops homology S/N to **1.00** (β).
-- **No inter-chain α–β coupling** (MI z ≈ 0), i.e. random pairing.
+- immrep25 positives sit **just above the noise floor** (CI excludes 1) and **one to
+  three orders of magnitude below every quality cohort**, on both chains and both probes.
+- Their weak within-epitope homology is **publicity**: 74.5% are within Hamming≤1 of a
+  known VDJdb/TCRvdb TCR; across all 20 epitopes they share just **54** β-neighbours (vs
+  **0** for the OLGA control), concentrated in a few epitopes (YLFNADIWI alone = 20).
+  Removing public TCRs drops homology S/N to **1.00** (β) / 1.37 (α).
+- **Negligible inter-chain α–β coupling** (0.05 bits vs ~1 bit for verified cohorts).
 
-**Conclusion:** no evidence of epitope-specific signal in the immrep25 positives beyond noise and publicity — consistent with the benchmark's own finding that models cannot predict unseen peptides.
+**Conclusion:** no meaningful epitope-specific signal in the immrep25 positives beyond
+noise and publicity — consistent with the benchmark's own finding that models cannot
+predict unseen peptides.
 
 ## Reproduce
 
@@ -50,15 +59,14 @@ Single conda env `dev` (Python 3.12) runs everything; gnuplot 6, graphviz, TeX L
 are used for the appendix. Install: `pip install -r requirements.txt`.
 
 ```bash
-bash scripts/fetch_vdjdb.sh   # download public VDJdb release into dump/ (not committed)
-python src/build_olga.py      # ~8 min: pgen-matched OLGA control -> results/olga_control.tsv
-python run_audit.py           # metrics -> results/*.csv, appendix/analysis/*.dat, macros
-python src/figures.py         # matplotlib figures -> results/figures/
-make -C appendix              # gnuplot (tikz) + LaTeX -> appendix/immrep25-audit.pdf
-python tests/test_homology.py # unit tests
+bash scripts/fetch_vdjdb.sh        # download public VDJdb release into dump/ (not committed)
+bash scripts/gen_olga_pool.sh      # 100k/chain OLGA pool with pgen, in parallel (GNU parallel)
+python src/build_olga.py           # OLGA random + pgen-matched cohorts -> results/olga_*.tsv
+python run_audit.py                # metrics -> results/*.csv, appendix/analysis/*.dat, macros
+python src/figures.py              # matplotlib figures -> results/figures/
+make -C appendix                   # gnuplot (tikz) + LaTeX -> appendix/immrep25-audit.pdf
+python tests/test_homology.py      # unit tests
 ```
-
-`run_audit.py --quick` uses fewer bootstraps for a fast pass.
 
 ## Data
 
@@ -70,13 +78,16 @@ python tests/test_homology.py # unit tests
 
 ## Method notes
 
-- **Homology**: within- vs between-epitope CDR3 pairs at Hamming ≤ d (equal-length),
-  as *rates* normalized by `C(N_e,2)` / `[C(N,2)−ΣC(N_e,2)]`; S/N = self-rate /
-  non-self-rate. d=0 isolates publicity, d=1 is the substitution signal. Cohorts are
-  compared at a common E×K matched design (TCRvdb caps E=2), bootstrapped with 95% CIs.
+- **One-vs-many**: each epitope (≥30 records) is scored against the rest of its cohort;
+  the dataset value is the mean over epitopes (±95% CI = epitope-to-epitope spread), so
+  no resampling is needed and the signal attaches to individual epitopes.
+- **Homology**: within- vs against-rest CDR3 pairs at Hamming ≤ d (equal-length), as
+  *rates* with an exposure-proportional pseudocount so S/N→1 under no enrichment;
+  reported for d=1,2,3 (geometric mean over epitopes). d=0 isolates publicity.
 - **Pairing**: per-epitope V/J gene-usage bias (KL vs background) and Miller–Madow
-  inter-chain mutual information, each as z vs a permutation null (label / pairing shuffle).
-- **OLGA control**: per-chain pgen of immrep25 positives matched by stratified sampling
-  of an OLGA-generated pool; α/β paired at random into immrep-shaped groups.
+  inter-chain MI, each as **excess over a permutation null in bits** (→0 under no signal).
+- **OLGA controls**: a 100k/chain pool is generated in parallel; **OLGA random** samples
+  it uniformly, **OLGA pgen-matched** stratifies it to the immrep25 per-chain pgen
+  distribution. Both α/β paired at random into immrep-shaped groups.
 
 Authors: Anna E. Koneva & Mikhail Shugay (ISALGO lab) · correspondence: mikhail.shugay@gmail.com

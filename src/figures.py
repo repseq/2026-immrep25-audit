@@ -23,9 +23,7 @@ EXPECT_COLOR = {"signal": "#2166ac", "weak": "#67a9cf", "noise": "#b2182b", "tes
 
 
 def _load_cohorts():
-    p = os.path.join(RESULTS, "olga_control.tsv")
-    olga = pd.read_csv(p, sep="\t") if os.path.exists(p) else None
-    return build_cohorts(include_olga=olga is not None, olga_paired=olga)
+    return build_cohorts(include_olga=True)
 
 
 def fig_hierarchy():
@@ -35,43 +33,41 @@ def fig_hierarchy():
     labels = [COHORT_META[c]["label"] for c in order]
     colors = [EXPECT_COLOR[COHORT_META[c]["expect"]] for c in order]
 
-    fig, axes = plt.subplots(1, 3, figsize=(13, 4.2))
+    fig, axes = plt.subplots(1, 3, figsize=(14, 4.4))
     for ax, chain in zip(axes[:2], ("B", "A")):
         d1 = hom[(hom.chain == chain) & (hom.d == 1)].set_index("cohort").loc[order]
         x = np.arange(len(order))
-        ax.errorbar(x, d1.sn_median, yerr=[d1.sn_median - d1.sn_lo, d1.sn_hi - d1.sn_median],
+        ax.bar(x, d1.sn, color=colors, alpha=0.5)
+        ax.errorbar(x, d1.sn, yerr=[d1.sn - d1.lo, d1.hi - d1.sn],
                     fmt="o", color="k", capsize=3, zorder=3)
-        ax.bar(x, d1.sn_median, color=colors, alpha=0.5)
         ax.axhline(1, ls="--", c="grey", lw=1)
         ax.set_yscale("log"); ax.set_title(f"Homology S/N (TR{chain}, d=1)")
         ax.set_xticks(x); ax.set_xticklabels(labels, rotation=40, ha="right", fontsize=8)
-    # pairing panel
+    # pairing panel (excess bits)
     ax = axes[2]
     pr = pair.set_index("cohort").loc[[c for c in order if c in set(pair.cohort)]]
     x = np.arange(len(pr))
-    ax.errorbar(x - 0.15, pr.gene_bias_z, yerr=[pr.gene_bias_z - pr.gene_bias_z_lo, pr.gene_bias_z_hi - pr.gene_bias_z],
-                fmt="s", capsize=3, label="gene-usage bias z", color="#1b7837")
-    ax.errorbar(x + 0.15, pr.mi_z, yerr=[pr.mi_z - pr.mi_z_lo, pr.mi_z_hi - pr.mi_z],
-                fmt="^", capsize=3, label="inter-chain MI z", color="#762a83")
-    ax.axhline(0, ls="--", c="grey", lw=1); ax.axhline(2, ls=":", c="grey", lw=0.8)
-    ax.set_title("Pairing non-randomness (z vs null)")
+    ax.errorbar(x - 0.15, pr.gene_mean, yerr=[pr.gene_mean - pr.gene_lo, pr.gene_hi - pr.gene_mean],
+                fmt="s", capsize=3, label="gene-usage bias", color="#1b7837")
+    ax.errorbar(x + 0.15, pr.mi_mean, yerr=[pr.mi_mean - pr.mi_lo, pr.mi_hi - pr.mi_mean],
+                fmt="^", capsize=3, label="inter-chain MI", color="#762a83")
+    ax.axhline(0, ls="--", c="grey", lw=1)
+    ax.set_title("Pairing excess over null (bits)")
     ax.set_xticks(x); ax.set_xticklabels([COHORT_META[c]["label"] for c in pr.index], rotation=40, ha="right", fontsize=8)
     ax.legend(fontsize=8)
     fig.tight_layout(); fig.savefig(os.path.join(FIGS, "fig_hierarchy.pdf")); plt.close(fig)
     print("wrote fig_hierarchy.pdf")
 
 
-def fig_homology_graphs(coh, chain="B", per_epi=60, n_epi=6):
+def fig_homology_graphs(coh, chain="B", min_n=30, target_nodes=1400):
     order = [c for c in HIERARCHY if c in coh]
-    n = len(order); ncol = 3; nrow = int(np.ceil(n / ncol))
-    fig, axes = plt.subplots(nrow, ncol, figsize=(4 * ncol, 3.6 * nrow))
+    n = len(order); ncol = 4; nrow = int(np.ceil(n / ncol))
+    fig, axes = plt.subplots(nrow, ncol, figsize=(3.6 * ncol, 3.4 * nrow))
     axes = np.array(axes).reshape(-1)
-    rng = np.random.default_rng(0)
     for ax, name in zip(axes, order):
         lc = coh[name]["long"]; lc = lc[lc.chain == chain]
-        vc = lc.epitope.value_counts(); eps = vc[vc >= 15].index.to_numpy()
-        if eps.size > n_epi:
-            eps = rng.choice(eps, n_epi, replace=False)
+        vc = lc.epitope.value_counts(); eps = vc[vc >= min_n].index.to_numpy()   # ALL epitopes >= min_n
+        per_epi = int(min(50, max(8, target_nodes / max(1, len(eps)))))
         parts = [lc[lc.epitope == e].sample(min(per_epi, (lc.epitope == e).sum()), random_state=0) for e in eps]
         sub = pd.concat(parts, ignore_index=True) if len(parts) else lc.head(0)
         G = build_graph(sub); pos = sfdp_layout(G)
@@ -98,7 +94,8 @@ def fig_pgen_match():
     if not os.path.exists(cache):
         return
     d = np.load(cache); pa, pb = d["pa"], d["pb"]
-    pool_b = pd.read_csv(os.path.join(REPO, "cache", "olga_pool_b.tsv"), sep="\t")
+    pool_b = pd.read_csv(os.path.join(REPO, "cache", "olga_pool_B.tsv"), sep="\t",
+                         names=["cdr3", "v", "j", "pgen"])
     fig, axes = plt.subplots(1, 2, figsize=(9, 3.6))
     for ax, arr, title in [(axes[0], pa, "TRA"), (axes[1], pb, "TRB")]:
         v = np.log10(arr[arr > 0])

@@ -115,6 +115,52 @@ def interchain_mi(paired: pd.DataFrame, n_perm: int, rng) -> dict:
             "mi_null_std": float(null.std()), "mi_z": float(z)}
 
 
+def pairing_per_epitope(paired: pd.DataFrame, min_n: int = 30, n_null: int = 40,
+                        seed: int = 0) -> pd.DataFrame:
+    """One-vs-many per-epitope pairing signals, each as z vs its own permutation null.
+
+    gene_z : (KL(P_e||Q) - null) / null_sd, null = random size-n_e draws from cohort
+    mi_z   : (MI((Va,Ja);(Vb,Jb)) - null) / null_sd, null = alpha<->beta shuffle within e
+    """
+    rng = np.random.default_rng(seed)
+    codes = {ax: _codes(paired[ax]) for ax in AXES}
+    vocab = {ax: int(codes[ax].max()) + 1 for ax in AXES}
+    bg = {ax: np.bincount(codes[ax], minlength=vocab[ax]) for ax in AXES}
+    A = _codes(paired["va"].astype(str) + "|" + paired["ja"].astype(str))
+    B = _codes(paired["vb"].astype(str) + "|" + paired["jb"].astype(str))
+    N = len(paired)
+    eps_u, inv = np.unique(paired.epitope.values, return_inverse=True)
+    rows = []
+    for ei, e in enumerate(eps_u):
+        idx = np.where(inv == ei)[0]
+        ne = idx.size
+        if ne < min_n:
+            continue
+        kl_obs = np.mean([_kl(np.bincount(codes[ax][idx], minlength=vocab[ax]), bg[ax]) for ax in AXES])
+        knull = np.empty(n_null)
+        for k in range(n_null):
+            s = rng.choice(N, ne, replace=False)
+            knull[k] = np.mean([_kl(np.bincount(codes[ax][s], minlength=vocab[ax]), bg[ax]) for ax in AXES])
+        a = pd.Categorical(A[idx]).codes; b = pd.Categorical(B[idx]).codes
+        mi_obs = _mi_mm(a, b)
+        mnull = np.array([_mi_mm(a, b[rng.permutation(ne)]) for _ in range(n_null)])
+        # excess over the null, in bits (robust; -> 0 under no signal, no z-score blow-up)
+        rows.append({"epitope": e, "n": ne,
+                     "gene_excess": kl_obs - knull.mean(), "kl_obs": kl_obs,
+                     "mi_excess": mi_obs - mnull.mean(), "mi_obs": mi_obs})
+    return pd.DataFrame(rows)
+
+
+def dataset_pairing(per_ep: pd.DataFrame, col: str):
+    """Mean +/- 95% CI (SE) of a per-epitope pairing z across the cohort."""
+    v = per_ep[col].values
+    v = v[np.isfinite(v)]
+    if len(v) == 0:
+        return dict(mean=np.nan, lo=np.nan, hi=np.nan, n_ep=0)
+    se = v.std(ddof=1) / np.sqrt(len(v)) if len(v) > 1 else 0.0
+    return dict(mean=v.mean(), lo=v.mean() - 1.96 * se, hi=v.mean() + 1.96 * se, n_ep=len(v))
+
+
 def _subsample_paired(paired: pd.DataFrame, K: int, E_cap: int, rng) -> pd.DataFrame:
     vc = paired.epitope.value_counts()
     elig = vc[vc >= K].index.to_numpy()

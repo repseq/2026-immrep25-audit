@@ -4,13 +4,16 @@ Each cohort is a dict {'long': <per-chain df>, 'paired': <wide df or None>}.
 Cohort order encodes the *expected* signal-to-noise hierarchy (high -> low).
 """
 from __future__ import annotations
+import os
 import pandas as pd
 
 from load_data import (load_immrep, load_tcrvdb, load_vdjdb,
                        _pair_to_long, valid_cdr3, LONG_COLS, PAIR_COLS)
 
+_REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
 HIERARCHY = ["tcrvdb_true", "vdjdb_hq", "vdjdb_lq", "tcrvdb_false",
-             "immrep25_pos", "olga_random"]
+             "immrep25_pos", "olga_matched", "olga_random"]
 
 # nice labels + a stable colour index for figures
 COHORT_META = {
@@ -19,6 +22,7 @@ COHORT_META = {
     "vdjdb_lq":     {"label": "VDJdb LQ",     "expect": "weak"},
     "tcrvdb_false": {"label": "TCRvdb false", "expect": "noise"},
     "immrep25_pos": {"label": "immrep25 pos", "expect": "test"},
+    "olga_matched": {"label": "OLGA pgen-matched", "expect": "noise"},
     "olga_random":  {"label": "OLGA random",  "expect": "noise"},
 }
 
@@ -29,6 +33,11 @@ def _mk_paired(df: pd.DataFrame, cohort: str, quality: str) -> pd.DataFrame:
     out["quality"] = quality
     out = out[out["cdr3a"].map(valid_cdr3) & out["cdr3b"].map(valid_cdr3)]
     return out[PAIR_COLS].reset_index(drop=True)
+
+
+def _load_olga(name: str):
+    p = os.path.join(_REPO, "results", "%s.tsv" % name)
+    return pd.read_csv(p, sep="\t") if os.path.exists(p) else None
 
 
 def build_cohorts(include_olga: bool = False, olga_paired: pd.DataFrame | None = None) -> dict:
@@ -54,10 +63,14 @@ def build_cohorts(include_olga: bool = False, olga_paired: pd.DataFrame | None =
         pr = paired[paired.quality == q].assign(cohort=name)[PAIR_COLS].reset_index(drop=True)
         coh[name] = {"paired": pr, "long": lg}
 
-    # --- OLGA random (built by olga_control.py) ---
-    if include_olga and olga_paired is not None:
-        p = _mk_paired(olga_paired, "olga_random", "noise")
-        coh["olga_random"] = {"paired": p, "long": _pair_to_long(p)}
+    # --- OLGA controls (built by build_olga.py -> results/olga_{matched,random}.tsv) ---
+    if include_olga:
+        for name in ("olga_matched", "olga_random"):
+            src = _load_olga(name)
+            if src is None:
+                continue
+            p = _mk_paired(src, name, "noise")
+            coh[name] = {"paired": p, "long": _pair_to_long(p)}
 
     return coh
 

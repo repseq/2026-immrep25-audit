@@ -84,11 +84,11 @@ def sn_from_counts(c: dict, max_d: int = 3, pseudo: float = 0.5) -> pd.DataFrame
     return pd.DataFrame(rows)
 
 
-def _cross_pairs_by_len(seqs_e, seqs_o, d: int, block: int = 200):
-    """Count Hamming<=d pairs between two sets (equal length), and the equal-length denom."""
+def _cross_hist_by_len(seqs_e, seqs_o, max_d: int, block: int = 200):
+    """Exact-distance histogram counts[0..max_d] of cross pairs (equal length) + denom."""
     seqs_e = list(seqs_e); seqs_o = list(seqs_o)
     le = np.array([len(s) for s in seqs_e]); lo = np.array([len(s) for s in seqs_o])
-    m = 0.0; denom = 0.0
+    hist = np.zeros(max_d + 1); denom = 0.0
     for L in np.unique(le):
         ie = np.where(le == L)[0]; io = np.where(lo == L)[0]
         if io.size == 0:
@@ -98,16 +98,18 @@ def _cross_pairs_by_len(seqs_e, seqs_o, d: int, block: int = 200):
         for s in range(0, ie.size, block):
             blk = np.stack([_encode(seqs_e[i]) for i in ie[s:s + block]])
             dist = (blk[:, None, :] != Ao[None, :, :]).sum(axis=2)
-            m += float(np.count_nonzero(dist <= d))
-    return m, denom
+            for dd in range(max_d + 1):
+                hist[dd] += float(np.count_nonzero(dist == dd))
+    return hist, denom
 
 
-def per_epitope_sn(long_chain: pd.DataFrame, d: int = 1, min_n: int = 50,
+def per_epitope_sn(long_chain: pd.DataFrame, max_d: int = 3, min_n: int = 30,
                    max_e: int = 300, max_rest: int = 4000, pseudo: float = 0.5,
                    seed: int = 0) -> pd.DataFrame:
-    """S/N of each epitope's within-set vs epitope-vs-rest CDR3 neighbours (Hamming<=d).
+    """One-vs-many S/N of each epitope: within-epitope vs epitope-vs-rest neighbours.
 
-    One row per epitope with >= min_n records; reports n and the self/non-self S/N.
+    One row per epitope with >= min_n records; columns m<d>, l<d>, sn<d> (cumulative
+    Hamming <= d) for d in 1..max_d, plus the d=1 within-epitope neighbour rate.
     Large sets are capped (epitope to max_e, rest to max_rest) for tractability.
     """
     rng = np.random.default_rng(seed)
@@ -121,16 +123,41 @@ def per_epitope_sn(long_chain: pd.DataFrame, d: int = 1, min_n: int = 50,
         R = long_chain[long_chain.epitope != e]
         if len(R) > max_rest:
             R = R.sample(max_rest, random_state=int(rng.integers(1 << 31)))
-        cw = count_pairs(E.cdr3.to_numpy(), np.array(["x"] * len(E)), max_d=d)
-        m = float(np.cumsum(cw["m_exact"])[d]); P_self = cw["P_self"]
-        l, P_non = _cross_pairs_by_len(E.cdr3.to_numpy(), R.cdr3.to_numpy(), d)
-        r_self = m / P_self if P_self else np.nan            # clean within-epitope neighbour rate
-        r_non = l / P_non if P_non else np.nan
-        sn = (((m + pseudo) / P_self) / ((l + pseudo) / P_non)
-              if P_self and P_non else np.nan)
-        rows.append({"epitope": e, "n": int(vc[e]), "m": m, "l": l,
-                     "r_self": r_self, "r_nonself": r_non, "sn": sn})
-    return pd.DataFrame(rows).sort_values("m", ascending=False).reset_index(drop=True)
+        cw = count_pairs(E.cdr3.to_numpy(), np.array(["x"] * len(E)), max_d=max_d)
+        m_cum = np.cumsum(cw["m_exact"]); P_self = cw["P_self"]
+        lhist, P_non = _cross_hist_by_len(E.cdr3.to_numpy(), R.cdr3.to_numpy(), max_d)
+        l_cum = np.cumsum(lhist)
+        row = {"epitope": e, "n": int(vc[e]), "P_self": P_self, "P_non": P_non}
+        for d in range(1, max_d + 1):
+            row["m%d" % d] = m_cum[d]; row["l%d" % d] = l_cum[d]
+            # exposure-proportional pseudocount: S/N -> 1 (not P_non/P_self) when counts are 0
+            if P_self and P_non:
+                r_self = (m_cum[d] + pseudo) / P_self
+                r_non = (l_cum[d] + pseudo * P_non / P_self) / P_non
+                row["sn%d" % d] = r_self / r_non
+            else:
+                row["sn%d" % d] = np.nan
+        row["r_self"] = m_cum[1] / P_self if P_self else np.nan
+        row["r_nonself"] = l_cum[1] / P_non if P_non else np.nan
+        rows.append(row)
+    cols = (["epitope", "n", "P_self", "P_non"]
+            + [c % d for d in range(1, max_d + 1) for c in ("m%d", "l%d", "sn%d")]
+            + ["r_self", "r_nonself"])
+    if not rows:
+        return pd.DataFrame(columns=cols)
+    return pd.DataFrame(rows).sort_values("m1", ascending=False).reset_index(drop=True)
+
+
+def dataset_sn(per_ep: pd.DataFrame, d: int = 1):
+    """Geometric mean +/- 95% CI (log10 SE) of per-epitope S/N across a cohort."""
+    s = per_ep["sn%d" % d].values
+    s = s[np.isfinite(s) & (s > 0)]
+    if len(s) == 0:
+        return dict(sn=np.nan, lo=np.nan, hi=np.nan, n_ep=0)
+    lg = np.log10(s)
+    mu = lg.mean()
+    se = lg.std(ddof=1) / np.sqrt(len(lg)) if len(lg) > 1 else 0.0
+    return dict(sn=10 ** mu, lo=10 ** (mu - 1.96 * se), hi=10 ** (mu + 1.96 * se), n_ep=len(s))
 
 
 def _subsample(long_chain: pd.DataFrame, K: int, E_cap: int, rng) -> pd.DataFrame:

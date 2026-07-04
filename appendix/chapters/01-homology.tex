@@ -1,60 +1,65 @@
 \section{Homology test}\label{sec:homology}
 
-\paragraph{Metric.} For a single chain, TCRs are grouped by epitope. Only
-equal-length CDR3s can share a Hamming distance, so pairs are counted within
-length bins. With $N_e$ TCRs for epitope $e$ in a cohort of $N$,
+\paragraph{Metric.} For a single chain we score each epitope one-vs-many. Only
+equal-length CDR3s can share a Hamming distance, so pairs are counted within length
+bins. For epitope $e$ ($N_e$ TCRs) against the other $N-N_e$ TCRs of its cohort,
 \[
-P_{\text{self}}=\sum_e \binom{N_e}{2},\qquad
-P_{\text{nonself}}=\binom{N}{2}-P_{\text{self}},
+P_{\text{self}}=\binom{N_e}{2},\qquad P_{\text{non}}=N_e\,(N-N_e)
 \]
-(over equal-length pairs) and, writing $m_{\le d}$/$l_{\le d}$ for within-/between-epitope
-pairs at Hamming $\le d$,
+(equal-length pairs); with $m_{\le d}$/$l_{\le d}$ the within-/against-rest pairs at
+Hamming $\le d$ and an exposure-proportional pseudocount $a$ (so S/N${\to}1$ under no
+enrichment),
 \[
-\mathrm{S/N}(d)=\frac{m_{\le d}/P_{\text{self}}}{l_{\le d}/P_{\text{nonself}}}.
+\mathrm{S/N}_e(d)=\frac{(m_{\le d}+a)/P_{\text{self}}}
+{\bigl(l_{\le d}+a\,P_{\text{non}}/P_{\text{self}}\bigr)/P_{\text{non}}}.
 \]
-The comparison is of \emph{rates}: non-self pairs vastly outnumber self pairs, so
-raw counts are not comparable---only after normalising by $P_{\text{self}}$ and
-$P_{\text{nonself}}$ does the enrichment appear. $d{=}0$ isolates publicity
-(identical CDR3s); $d{=}1$ is the substitution-neighbour convergence signal
-exploited by curated specificity databases~\cite{Shugay_2017}; signal $\Rightarrow$ S/N $\gg 1$, noise $\Rightarrow$
-S/N $\approx 1$.
+The dataset value is the geometric mean of $\mathrm{S/N}_e$ over epitopes ($\pm$95\%
+CI); the error bars are thus the epitope-to-epitope spread. $d{=}0$ isolates
+publicity (identical CDR3s); $d{=}1$ is the substitution-neighbour convergence signal
+exploited by curated specificity databases~\cite{Shugay_2017}; signal $\Rightarrow$
+S/N $\gg 1$, noise $\Rightarrow$ S/N $\approx 1$.
 
-\paragraph{Result.} Figure~\ref{fig:hom} places the cohorts on the S/N axis at the
-matched design. The ordering is
-VDJdb-HQ $>$ TCRvdb-true $\gtrsim$ TCRvdb-false $>$ VDJdb-LQ $\gg$ immrep25 $>$ OLGA.
+\paragraph{Result.} Figure~\ref{fig:hom} orders the cohorts:
+VDJdb-HQ $>$ TCRvdb-true $>$ TCRvdb-false $>$ VDJdb-LQ $\gg$ immrep25 $>$ OLGA.
 On TR$\beta$ the verified cohorts reach S/N $=\hqHomB$ (VDJdb-HQ) and $\trueHomB$
-(TCRvdb-true), whereas immrep25 positives give only $\immHomB$ and the
-$P_{\text{gen}}$-matched OLGA floor is $\olgaHomB$. The same picture holds on
-TR$\alpha$ (immrep25 $\immHomA$ vs.\ OLGA $\olgaHomA$).
+(TCRvdb-true), whereas immrep25 positives give only $\immHomB$ and both OLGA controls
+sit at the floor ($\olgaMHomB$ matched, $\olgaRHomB$ raw). The same holds on
+TR$\alpha$ (immrep25 $\immHomA$ vs.\ OLGA $\olgaMHomA$). immrep25's CI excludes $1$
+but lies one to three orders of magnitude below every quality cohort. As the
+substitution radius grows (Fig.~\ref{fig:dlines}) the verified cohorts stay high
+while immrep25 and OLGA remain near the floor across $d=1,2,3$.
 
 \begin{figure}[h]\centering
 \input{analysis/fig_homology.tex}
-\caption{Homology S/N ($d{=}1$) per cohort, TR$\alpha$ and TR$\beta$, matched
-design ($E{=}2$, $K{=}30$, 200 bootstraps; bars = median, whiskers = 95\% CI).
-The whiskers are bootstrap confidence intervals over resampled epitopes \emph{and}
-TCRs, so their width mainly reflects between-epitope variation (each bootstrap draws
-$E{=}2$ epitopes; per-epitope $n{=}50$ for immrep25). Dashed line: noise floor
-S/N${=}1$. immrep25 positives sit just above the OLGA random floor and far below
-every quality cohort.}
+\caption{Homology S/N ($d{=}1$) per cohort, TR$\alpha$ and TR$\beta$ (one-vs-many:
+each epitope with $\ge 30$ records vs.\ the rest; bar = geometric mean over epitopes,
+whiskers = 95\% CI = between-epitope spread). Dashed line: noise floor S/N${=}1$.}
 \label{fig:hom}
 \end{figure}
 
-\paragraph{By-epitope breakdown.} To show what drives those intervals,
-Fig.~\ref{fig:bee} plots the within-epitope neighbour rate for every epitope with
-$n\ge 50$ (one point per epitope); the vertical gap to each cohort's non-self rate
-(red bar) is the S/N. immrep25's swarm hugs its non-self line, whereas the verified
-cohorts sit orders of magnitude above. Table~\ref{tab:epi} lists all 20 immrep25
-epitopes: in total they contribute only $\immWithinB$ (TR$\beta$) / $\immWithinA$
-(TR$\alpha$) within-epitope Hamming-$1$ neighbours --- versus $\olgaWithinB$ /
-$\olgaWithinA$ for the $P_{\text{gen}}$-matched OLGA control and tens of thousands
-for the VDJdb cohorts --- and even that handful is concentrated in a few epitopes
-(e.g.\ YLFNADIWI) and is entirely public (\S\ref{sec:publicity}).
+\begin{figure}[h]\centering
+\input{analysis/fig_dlines.tex}
+\caption{Homology S/N vs.\ substitution radius $d=1,2,3$ (one-vs-many geometric mean).
+Verified cohorts stay high; immrep25 and both OLGA controls track the floor.}
+\label{fig:dlines}
+\end{figure}
+
+\paragraph{By-epitope breakdown.} Figure~\ref{fig:bee} plots the within-epitope
+neighbour rate for every epitope with $n\ge 30$ (one point per epitope; boxplots show
+the per-cohort quartiles); the vertical gap to each cohort's non-self rate (red bar)
+is the S/N. immrep25's points hug its non-self line, whereas the verified cohorts sit
+orders of magnitude above. Table~\ref{tab:epi} lists all 20 immrep25 epitopes: in
+total they contribute only $\immWithinB$ (TR$\beta$) / $\immWithinA$ (TR$\alpha$)
+within-epitope Hamming-$1$ neighbours --- versus $\olgaWithinB$ / $\olgaWithinA$ for
+the $P_{\text{gen}}$-matched OLGA control and tens of thousands for the VDJdb cohorts
+--- and even that handful is concentrated in a few epitopes (e.g.\ YLFNADIWI) and is
+entirely public (\S\ref{sec:publicity}).
 
 \begin{figure}[h]\centering
 \input{analysis/fig_beeswarm.tex}
-\caption{Per-epitope within-epitope neighbour rate (TR$\beta$, Hamming$\le 1$); each
-point is one epitope ($n\ge 50$). Red bars = cohort pooled cross-epitope (non-self)
-rate; the vertical gap is the homology S/N.}
+\caption{Per-epitope within-epitope neighbour rate (TR$\beta$, Hamming$\le 1$; each
+point is one epitope, $n\ge 30$; boxplots = per-cohort quartiles). Red bars = cohort
+pooled cross-epitope (non-self) rate; the vertical gap is the homology S/N.}
 \label{fig:bee}
 \end{figure}
 
@@ -66,14 +71,14 @@ Hamming-$1$ CDR3 neighbours per chain, versus the OLGA control. Sorted by TR$\be
 \end{table}
 
 \paragraph{Graph view.} The S/N ratio is the within- vs.\ between-epitope
-edge-density of the homology graph (nodes${=}$CDR3, edges${=}$Hamming${\le}1$).
-Figure~\ref{fig:homgraph} renders it (graphviz \texttt{sfdp} layout): the verified
-cohorts form dense epitope-coloured cliques, while immrep25 and OLGA are almost
-edgeless point clouds.
+edge-density of the homology graph (nodes${=}$CDR3, edges${=}$Hamming${\le}1$; all
+epitopes with $\ge 30$ records). Figure~\ref{fig:homgraph} renders it (graphviz
+\texttt{sfdp} layout): the verified cohorts form dense epitope-coloured cliques, while
+immrep25 and both OLGA controls are near-edgeless point clouds.
 
 \begin{figure}[h]\centering
 \includegraphics[width=\linewidth]{../results/figures/fig_homology_graph_TRB.pdf}
-\caption{TR$\beta$ homology graph per cohort (equal sampling). Edge counts:
-VDJdb-HQ $\sim$550, TCRvdb-true 75, versus immrep25 $\sim$17 and OLGA $\sim$1.}
+\caption{TR$\beta$ homology graph per cohort (all epitopes $\ge 30$ records). Verified
+cohorts form dense epitope-coloured cliques; immrep25 and OLGA are near-edgeless.}
 \label{fig:homgraph}
 \end{figure}

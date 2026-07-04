@@ -23,13 +23,16 @@ Correspondence: \texttt{mikhail.shugay@gmail.com}}}
 \noindent We ask whether the \emph{positive} TCR--peptide assignments in the
 immrep25 unseen-peptide benchmark carry epitope-specific signal, or only noise and
 publicity. Two biologically-grounded probes---within- vs.\ between-epitope CDR3
-\emph{homology} and per-epitope V/J \emph{chain pairing}---are calibrated against
-cohorts of known quality (TCRvdb experimentally verified / refuted; VDJdb high- /
-low-reference-support) and a generation-probability--matched OLGA random floor.
-On both probes and both chains the immrep25 positives sit at the noise floor,
-indistinguishable from the pgen-matched random control; their only measurable
-homology is fully explained by public TCRs. We conclude the positive labels are
-not backed by convergent-TCR biology.
+\emph{homology} and per-epitope V/J \emph{chain pairing}---are evaluated one-vs-many
+per epitope and aggregated across epitopes, then calibrated against cohorts of known
+quality (TCRvdb experimentally verified / refuted; VDJdb high- / low-reference-support)
+and two OLGA controls (raw random and generation-probability--matched) that fix the
+noise floor at S/N${=}1$. On both probes and both chains the immrep25 positives sit
+just above that floor and one to three orders of magnitude below every quality
+cohort; their weak homology is fully explained by public TCRs (it collapses to the
+floor once public TCRs are removed) and their inter-chain pairing shows essentially
+no coupling. We conclude the positive labels carry no meaningful epitope-specific
+signal beyond noise and publicity.
 \end{abstract}
 
 \input{chapters/00-data}

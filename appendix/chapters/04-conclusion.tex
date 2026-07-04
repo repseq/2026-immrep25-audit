@@ -1,30 +1,32 @@
 \section{Conclusion}\label{sec:conclusion}
 
 Across both probes and both chains the calibration cohorts recover the expected
-order, and the immrep25 positives fall at the bottom, on top of the
-$P_{\text{gen}}$-matched random floor (Fig.~\ref{fig:ladder}). Their only
-measurable homology is contributed by public TCRs and vanishes when those are
-removed; their chain pairing shows no coupling beyond marginals. We therefore find
-\emph{no evidence of epitope-specific signal---in homology or chain pairing---among
-the immrep25 positives beyond noise and publicity}.
+order, and the immrep25 positives fall at the bottom, just above the two OLGA random
+floors and one to three orders of magnitude below every quality cohort
+(Fig.~\ref{fig:ladder}). Their weak homology is contributed by public TCRs and
+collapses to the floor when those are removed; their inter-chain pairing shows
+essentially no coupling. We therefore find \emph{no meaningful epitope-specific
+signal---in homology or chain pairing---among the immrep25 positives beyond noise and
+publicity}, consistent with the benchmark's own finding that models do not exceed
+random guessing on unseen peptides~\cite{Richardson2026}.
 
 \begin{figure}[h]\centering
 \begin{tikzpicture}[font=\footnotesize,>=Latex,
   rung/.style={draw,rounded corners,minimum width=52mm,minimum height=7mm,align=center}]
 \definecolor{sig}{HTML}{2166ac}\definecolor{weak}{HTML}{67a9cf}
 \definecolor{noise}{HTML}{b2182b}\definecolor{test}{HTML}{ef8a00}
-\node[rung,fill=sig!25]  (a) at (0,5.0) {VDJdb HQ \hfill S/N$\approx$285 (TR$\beta$)};
-\node[rung,fill=sig!18]  (b) at (0,4.1) {TCRvdb true \hfill S/N$\approx$33};
-\node[rung,fill=sig!12]  (c) at (0,3.2) {TCRvdb false \hfill S/N$\approx$29};
-\node[rung,fill=weak!25] (d) at (0,2.3) {VDJdb LQ \hfill S/N$\approx$15};
-\node[rung,fill=test!30] (e) at (0,1.2) {\textbf{immrep25 pos} \hfill S/N$\approx$2.5};
-\node[rung,fill=noise!22](f) at (0,0.3) {OLGA random \hfill S/N$\approx$1.0};
+\node[rung,fill=sig!25]  (a) at (0,5.0) {VDJdb HQ \hfill S/N$\approx\hqHomB$ (TR$\beta$)};
+\node[rung,fill=sig!18]  (b) at (0,4.1) {TCRvdb true \hfill S/N$\approx\trueHomB$};
+\node[rung,fill=sig!12]  (c) at (0,3.2) {TCRvdb false \hfill S/N$\approx\falseHomB$};
+\node[rung,fill=weak!25] (d) at (0,2.3) {VDJdb LQ \hfill S/N$\approx\lqHomB$};
+\node[rung,fill=test!30] (e) at (0,1.2) {\textbf{immrep25 pos} \hfill S/N$\approx\immHomB$};
+\node[rung,fill=noise!22](f) at (0,0.3) {OLGA (matched/raw) \hfill S/N$\approx\olgaMHomB$};
 \draw[->,thick] (-3.4,0.0) -- (-3.4,5.4) node[above,align=center]{signal};
 \draw[dashed,gray] (-2.7,0.75) -- (2.7,0.75) node[right,black]{\scriptsize noise floor};
 \node[test,right=1mm of e,xshift=52mm,align=left]
-  {$\leftarrow$ non-public: S/N$\to$1.0\\\phantom{x}\ \ MI $z\approx0$};
+  {$\leftarrow$ non-public: S/N$\to\npHomB$\\\phantom{x}\ \ MI $\approx\immMi$ bits};
 \end{tikzpicture}
-\caption{Signal-to-noise ladder (TR$\beta$ homology, matched design). The immrep25
+\caption{Signal-to-noise ladder (TR$\beta$ homology, one-vs-many). The immrep25
 positives sit one rung above the random floor; stripping public TCRs lowers them
 onto it.}
 \label{fig:ladder}
@@ -32,7 +34,8 @@ onto it.}
 
 \paragraph{Caveats.} TCRvdb true/false separate less than expected because
 $p_{\text{adj}}$ scores differential enrichment in one screen rather than absence of
-specificity, so ``false'' still contains epitope-associated TCRs; the matched design
-is capped at $E{=}2$ epitopes by TCRvdb. Neither affects the immrep25$\approx$OLGA
-result, which is established at immrep25's own 20-epitope design as well.
-Reproduce with \texttt{python run\_audit.py} then \texttt{make}.
+specificity, so ``false'' still contains epitope-associated TCRs; and TCRvdb and
+VDJdb-HQ rest on only 2 and 5 epitopes respectively, so their absolute S/N is
+uncertain (wide CIs). Neither affects immrep25, whose 20 epitopes place it just above
+the OLGA floor on every probe. Reproduce with \texttt{bash scripts/fetch\_vdjdb.sh};
+\texttt{python src/build\_olga.py}; \texttt{python run\_audit.py}; \texttt{make}.

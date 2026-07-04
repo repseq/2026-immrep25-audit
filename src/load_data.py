@@ -89,20 +89,33 @@ def load_tcrvdb() -> pd.DataFrame:
 #   paired quality:       distinct reference.id per (paired clonotype, epitope) >= 2 -> HQ
 # --------------------------------------------------------------------------- #
 def load_vdjdb(hq_min_refs: int = 2):
+    """Return (long_all, paired). HQ is defined per chain (TRA/TRB separately) as a
+    (TCR_hash, epitope) supported by >= hq_min_refs distinct references; a paired
+    complex is HQ if *either* chain is HQ, and both of its chains inherit that flag
+    in the single-chain `long` table.
+    """
     v = pd.read_csv(VDJDB, sep="\t", low_memory=False)
     v = v[(v["species"] == "HomoSapiens") & (v["mhc.class"] == "MHCI")].copy()
     v["v"] = v["v.segm"].map(canon_gene)
     v["j"] = v["j.segm"].map(canon_gene)
     v["epitope"] = v["antigen.epitope"].astype(str)
-
-    # per-chain quality
-    nref = v.groupby(["TCR_hash", "epitope"])["reference.id"].transform("nunique")
-    v["quality"] = ["hq" if n >= hq_min_refs else "lq" for n in nref]
     v["chain"] = v["gene"].map({"TRA": "A", "TRB": "B"})
 
+    # per-chain HQ flag
+    nref = v.groupby(["TCR_hash", "epitope"])["reference.id"].transform("nunique")
+    v["chain_hq"] = nref >= hq_min_refs
+
+    # complex HQ = any chain HQ (map back onto both rows of each complex)
+    cx = v[v["complex.id"] != 0]
+    complex_hq = cx.groupby("complex.id")["chain_hq"].transform("any")
+    v.loc[cx.index, "complex_hq"] = complex_hq
+    # long quality: paired rows use complex HQ (any chain); unpaired use own chain HQ
+    is_paired = v["complex.id"] != 0
+    hq_flag = v["chain_hq"].where(~is_paired, v["complex_hq"].fillna(False).astype(bool))
+    v["quality"] = ["hq" if q else "lq" for q in hq_flag.fillna(False)]
+
     long_all = v.assign(cohort="vdjdb", tcr_id="vdjdb_" + v.index.astype(str))
-    long_all = long_all.rename(columns={"cdr3": "cdr3"})[
-        ["cohort", "tcr_id", "chain", "epitope", "cdr3", "v", "j", "quality"]]
+    long_all = long_all[["cohort", "tcr_id", "chain", "epitope", "cdr3", "v", "j", "quality"]]
     long_all = long_all[long_all["cdr3"].map(valid_cdr3)].reset_index(drop=True)
 
     # paired: pivot complexes (each complex.id has exactly one TRA + one TRB)
@@ -110,20 +123,16 @@ def load_vdjdb(hq_min_refs: int = 2):
     a = vp[vp["gene"] == "TRA"].set_index("complex.id")
     b = vp[vp["gene"] == "TRB"].set_index("complex.id")
     common = a.index.intersection(b.index)
+    pair_hq = (a.loc[common, "chain_hq"].values | b.loc[common, "chain_hq"].values)
     paired = pd.DataFrame({
         "cohort": "vdjdb",
         "tcr_id": ["vdjdbc_%s" % c for c in common],
         "epitope": a.loc[common, "epitope"].values,
         "cdr3a": a.loc[common, "cdr3"].values, "va": a.loc[common, "v"].values, "ja": a.loc[common, "j"].values,
         "cdr3b": b.loc[common, "cdr3"].values, "vb": b.loc[common, "v"].values, "jb": b.loc[common, "j"].values,
-        "ref": a.loc[common, "reference.id"].values,
+        "quality": ["hq" if q else "lq" for q in pair_hq],
     })
-    paired = paired[paired["cdr3a"].map(valid_cdr3) & paired["cdr3b"].map(valid_cdr3)].copy()
-    # paired quality: distinct references across identical paired clonotypes for same epitope
-    clonekey = paired[["cdr3a", "va", "ja", "cdr3b", "vb", "jb", "epitope"]].agg("|".join, axis=1)
-    pref = paired.assign(clonekey=clonekey).groupby("clonekey")["ref"].transform("nunique")
-    paired["quality"] = ["hq" if n >= hq_min_refs else "lq" for n in pref]
-    paired = paired.drop(columns=["ref"]).reset_index(drop=True)
+    paired = paired[paired["cdr3a"].map(valid_cdr3) & paired["cdr3b"].map(valid_cdr3)].reset_index(drop=True)
     return long_all, paired
 
 

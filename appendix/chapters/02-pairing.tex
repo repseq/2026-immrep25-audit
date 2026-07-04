@@ -1,33 +1,34 @@
 \section{Pairing test}\label{sec:pairing}
 
 \paragraph{Metric.} Genome-wide $\alpha/\beta$ pairing is close to
-random~\cite{Shcherbinin_2020}, but given an epitope the V/J usage is constrained. Two
-signals are scored against permutation nulls, per cohort at the matched design:
+random~\cite{Shcherbinin_2020}, but given an epitope the V/J usage may be constrained.
+For every epitope with $\ge 30$ paired records we measure two signals as the
+\emph{excess over a permutation null}, in bits, then average over epitopes
+($\pm$95\% CI):
 \begin{itemize}\itemsep2pt
-\item \textbf{gene-usage bias}: $\overline{\mathrm{KL}}=\sum_e w_e\,
-  \mathrm{KL}\!\left(P_e(\text{gene})\,\|\,Q(\text{gene})\right)$ over axes
-  $V\alpha,J\alpha,V\beta,J\beta$, with $P_e$ the within-epitope gene distribution
-  and $Q$ the cohort background; null $=$ shuffle epitope labels.
-\item \textbf{inter-chain MI}: $\overline{I}=\sum_e w_e\,
-  I\!\left((V\alpha,J\alpha);(V\beta,J\beta)\right)$ within epitope
-  (Miller--Madow corrected); null $=$ shuffle the $\alpha\!\leftrightarrow\!\beta$
-  pairing within each epitope (keeps marginals, destroys coupling).
+\item \textbf{gene-usage bias}: $\overline{\mathrm{KL}}(P_e\,\|\,Q)$ over axes
+  $V\alpha,J\alpha,V\beta,J\beta$ ($P_e$ = within-epitope gene distribution, $Q$ =
+  cohort background) minus its mean under size-matched random draws from $Q$.
+\item \textbf{inter-chain MI}: $I\!\left((V\alpha,J\alpha);(V\beta,J\beta)\right)$
+  within epitope (Miller--Madow) minus its mean under $\alpha\!\leftrightarrow\!\beta$
+  shuffles (which keep the marginals but destroy coupling).
 \end{itemize}
-Both are reported as $z=(\text{obs}-\mu_{\text{null}})/\sigma_{\text{null}}$;
-signal $\Rightarrow z\gg0$, random $\Rightarrow z\approx0$.
+Both are $0$ under no signal and grow (in bits) with genuine per-epitope structure.
 
-\paragraph{Result.} Figure~\ref{fig:pair} shows both $z$-scores. The verified
-cohorts are strongly non-random (VDJdb-HQ gene-bias $z=\hqGeneZ$), while immrep25
-positives are at the floor: gene-usage bias $z=\immGeneZ$ and, decisively, an
-inter-chain coupling of $z=\immMiZ$---i.e.\ \emph{no} $\alpha$--$\beta$ coupling
-beyond marginals, exactly the random-pairing expectation shared with OLGA. (The
-large raw MI at $K{=}30$ is finite-sample bias; the pairing-shuffle null removes
-it.)
+\paragraph{Result.} Figure~\ref{fig:pair} shows both. The verified cohorts carry
+substantial gene-usage bias (VDJdb-HQ $\hqGene$ bits) and real inter-chain coupling
+(TCRvdb-true $\trueMi$ bits). immrep25 positives are near the floor on both:
+gene-usage bias $\immGene$ bits and, decisively, an inter-chain coupling of only
+$\immMi$ bits---an order of magnitude below every quality cohort and barely above the
+OLGA controls ($\olgaMGene$ / $\olgaMMi$ bits). The residual gene-usage bias is
+consistent with the public, HLA-restricted composition of the positives rather than
+epitope-specific pairing.
 
 \begin{figure}[h]\centering
 \input{analysis/fig_pairing.tex}
-\caption{Pairing non-randomness $z$ (median, 95\% CI) per cohort: gene-usage bias
-(squares) and inter-chain mutual information (triangles). Dashed line $z{=}0$
-(random), dotted $z{=}2$. immrep25 and OLGA sit at the random line on both.}
+\caption{Pairing signals per cohort (one-vs-many over all epitopes with $\ge 30$
+records): per-epitope excess over the permutation null, in bits (mean $\pm$ 95\% CI).
+Squares = gene-usage bias, triangles = inter-chain MI. Dashed line = $0$ (random).
+immrep25 and both OLGA controls sit at the random line, especially for MI.}
 \label{fig:pair}
 \end{figure}

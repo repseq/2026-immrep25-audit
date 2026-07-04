@@ -3,7 +3,8 @@
 #            + matplotlib figures in ../results/figures -> latexmk -lualatex -> PDF
 GP      = gnuplot
 FIGS    = analysis/fig_homology.tex analysis/fig_pairing.tex \
-          analysis/fig_publicity.tex analysis/fig_pgen.tex analysis/fig_beeswarm.tex
+          analysis/fig_publicity.tex analysis/fig_pgen.tex analysis/fig_beeswarm.tex \
+          analysis/fig_dlines.tex
 MAIN    = immrep25-audit
 # gnuplot's lua-tikz style + common macros live in analysis/
 export TEXINPUTS := ./analysis:$(TEXINPUTS)

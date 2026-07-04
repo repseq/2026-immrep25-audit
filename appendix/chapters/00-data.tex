@@ -15,7 +15,8 @@ VDJdb HQ     & VDJdb human MHC-I, $\ge 2$ references per (TCR, epitope) & strong
 VDJdb LQ     & VDJdb human MHC-I, single reference & weakly supported \\
 TCRvdb false & TCRvdb, $p_{\text{adj}}\ge 10^{-5}$ & experimentally refuted \\
 immrep25 pos & immrep25 \texttt{label}=1 & \textbf{system under test} \\
-OLGA random  & $P_{\text{gen}}$-matched to immrep25 pos & pure-noise floor \\
+OLGA pgen-matched & $P_{\text{gen}}$-matched to immrep25 pos & noise floor \\
+OLGA random  & raw OLGA generation & noise floor \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -26,11 +27,19 @@ benchmark~\cite{Richardson2026}, and an OLGA control built from the TCR generati
 model of Murugan~et~al.~\cite{Murugan_2012}. The immrep25 test set covers 20
 nine-mer peptides that are \emph{absent from VDJdb}, with 50 positives (and 450
 negatives) each; only positives are audited.
-TCRvdb true/false are dominated by the same two epitopes (YLQPRTFLL, GLCTLVAML),
-giving an epitope-matched verified-vs-refuted contrast. Because the number of
-epitopes itself inflates S/N, all cross-cohort comparisons use a \emph{matched
-design}: $E=2$ epitopes $\times\,K=30$ TCRs, bootstrapped (the two-epitope cap is
-imposed by TCRvdb), with permutation nulls making every metric dimensionless.
+VDJdb HQ is defined per chain (TRA and TRB separately) as a (TCR, epitope) supported
+by $\ge 2$ distinct references, with a paired complex counted HQ if \emph{either}
+chain qualifies. TCRvdb true/false are dominated by the same two epitopes
+(YLQPRTFLL, GLCTLVAML), giving an epitope-matched verified-vs-refuted contrast.
+
+\paragraph{One-vs-many.} Every metric is computed \emph{per epitope} against all
+others (each epitope with $\ge 30$ records vs.\ the rest of its cohort) and then
+aggregated to a dataset value---geometric mean $\pm$ 95\% CI for homology S/N, mean
+$\pm$ 95\% CI for pairing---across epitopes. The signal therefore attaches to
+individual epitopes and the reported error bars are the epitope-to-epitope spread
+($n$ = number of qualifying epitopes); no bootstrap resampling is used. The two
+OLGA controls fix the noise floor: raw random draws and draws whose per-chain
+generation probability is matched to immrep25 (so chance matchability is controlled).
 
 \paragraph{Pipeline.}
 \begin{center}
