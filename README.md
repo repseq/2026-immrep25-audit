@@ -38,11 +38,16 @@ controls fix the noise floor at S/N=1. TRβ:
 | TCRvdb false (p_adj≥1e-5) | 86 | 0.15 | 0.33 |
 | VDJdb LQ (1 ref) | 30 | 0.96 | 0.44 |
 | **immrep25 positives** | **2.7** | **0.20** | **0.05** |
+| AIRR control (real repertoire) | 1.0 | 0.00 | ~0 |
 | OLGA pgen-matched | 1.0 | 0.01 | ~0 |
 | OLGA random | 1.0 | 0.01 | ~0 |
 
 - immrep25 positives sit **just above the noise floor** (CI excludes 1) and **one to
   three orders of magnitude below every quality cohort**, on both chains and both probes.
+- The floor is confirmed by three independent controls — two generative (OLGA) and a
+  **real post-thymic-selection repertoire** (AIRR, from [isalgo/airr_control](https://huggingface.co/datasets/isalgo/airr_control)) — all at S/N=1.
+- Reported prediction scores agree: IMMREP23 reached median AUC₀.₁ ≳ 0.7 on *seen*
+  peptides ([Nielsen 2024](https://doi.org/10.1016/j.immuno.2024.100045)) but IMMREP25's best was macro-AUC₀.₁ = 0.60 on *unseen* — our audit explains why.
 - Their weak within-epitope homology is **publicity**: 74.5% are within Hamming≤1 of a
   known VDJdb/TCRvdb TCR; across all 20 epitopes they share just **54** β-neighbours (vs
   **0** for the OLGA control), concentrated in a few epitopes (YLFNADIWI alone = 20).
@@ -59,9 +64,11 @@ Single conda env `dev` (Python 3.12) runs everything; gnuplot 6, graphviz, TeX L
 are used for the appendix. Install: `pip install -r requirements.txt`.
 
 ```bash
-bash scripts/fetch_vdjdb.sh        # download public VDJdb release into dump/ (not committed)
+bash scripts/fetch_vdjdb.sh        # public VDJdb release into dump/ (not committed)
+bash scripts/fetch_airr.sh         # real AIRR control repertoire into cache/ (not committed)
 bash scripts/gen_olga_pool.sh      # 100k/chain OLGA pool with pgen, in parallel (GNU parallel)
 python src/build_olga.py           # OLGA random + pgen-matched cohorts -> results/olga_*.tsv
+python src/build_airr.py           # AIRR real-repertoire control -> results/airr_control.tsv
 python run_audit.py                # metrics -> results/*.csv, appendix/analysis/*.dat, macros
 python src/figures.py              # matplotlib figures -> results/figures/
 make -C appendix                   # gnuplot (tikz) + LaTeX -> appendix/immrep25-audit.pdf
@@ -86,8 +93,9 @@ python tests/test_homology.py      # unit tests
   reported for d=1,2,3 (geometric mean over epitopes). d=0 isolates publicity.
 - **Pairing**: per-epitope V/J gene-usage bias (KL vs background) and Miller–Madow
   inter-chain MI, each as **excess over a permutation null in bits** (→0 under no signal).
-- **OLGA controls**: a 100k/chain pool is generated in parallel; **OLGA random** samples
-  it uniformly, **OLGA pgen-matched** stratifies it to the immrep25 per-chain pgen
-  distribution. Both α/β paired at random into immrep-shaped groups.
+- **Controls (noise floor, S/N=1)**: **OLGA random** (100k/chain pool sampled uniformly),
+  **OLGA pgen-matched** (stratified to the immrep25 per-chain pgen), and **AIRR control**
+  (1000 real post-thymic-selection clonotypes/chain, reservoir-sampled from a bulk human
+  repertoire). All α/β paired at random into immrep-shaped synthetic epitope groups.
 
 Authors: Anna E. Koneva & Mikhail Shugay (ISALGO lab) · correspondence: mikhail.shugay@gmail.com

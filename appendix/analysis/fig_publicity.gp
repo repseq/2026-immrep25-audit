@@ -10,7 +10,7 @@ set grid ytics lc rgb '#dddddd'
 set yrange [0:*]
 set bmargin 3.4
 set xtics out nomirror offset 0,-0.1 font ",8"
-set xtics ("all TR$\\alpha$" 0,"all TR$\\beta$" 1,"non-pub TR$\\alpha$" 2,"non-pub TR$\\beta$" 3)
+set xtics ("all TCR$\\alpha$" 0,"all TCR$\\beta$" 1,"non-pub TCR$\\alpha$" 2,"non-pub TCR$\\beta$" 3)
 set xrange [-0.6:3.6]
 RGB(i) = (i<2) ? 0xef8a00 : 0xb2182b
 plot 'publicity.dat' u 1:4:(RGB(int($1))) w boxes lc rgb variable notitle, \

@@ -21,17 +21,20 @@ S/N $\gg 1$, noise $\Rightarrow$ S/N $\approx 1$.
 
 \paragraph{Result.} Figure~\ref{fig:hom} orders the cohorts:
 VDJdb-HQ $>$ TCRvdb-true $>$ TCRvdb-false $>$ VDJdb-LQ $\gg$ immrep25 $>$ OLGA.
-On TR$\beta$ the verified cohorts reach S/N $=\hqHomB$ (VDJdb-HQ) and $\trueHomB$
-(TCRvdb-true), whereas immrep25 positives give only $\immHomB$ and both OLGA controls
-sit at the floor ($\olgaMHomB$ matched, $\olgaRHomB$ raw). The same holds on
-TR$\alpha$ (immrep25 $\immHomA$ vs.\ OLGA $\olgaMHomA$). immrep25's CI excludes $1$
+On TCR$\beta$ the verified cohorts reach S/N $=\hqHomB$ (VDJdb-HQ) and $\trueHomB$
+(TCRvdb-true), whereas immrep25 positives give only $\immHomB$ and all three controls
+sit at the floor (OLGA $\olgaMHomB$ matched / $\olgaRHomB$ raw; AIRR $\airrHomB$). The
+same holds on TCR$\alpha$ (immrep25 $\immHomA$ vs.\ OLGA $\olgaMHomA$, AIRR $\airrHomA$).
+Notably the real AIRR repertoire---despite genuine thymic selection and public,
+convergent sequences---also sits at $1$, confirming the floor is not an artefact of the
+generative model. immrep25's CI excludes $1$
 but lies one to three orders of magnitude below every quality cohort. As the
 substitution radius grows (Fig.~\ref{fig:dlines}) the verified cohorts stay high
 while immrep25 and OLGA remain near the floor across $d=1,2,3$.
 
 \begin{figure}[h]\centering
 \input{analysis/fig_homology.tex}
-\caption{Homology S/N ($d{=}1$) per cohort, TR$\alpha$ and TR$\beta$ (one-vs-many:
+\caption{Homology S/N ($d{=}1$) per cohort, TCR$\alpha$ and TCR$\beta$ (one-vs-many:
 each epitope with $\ge 30$ records vs.\ the rest; bar = geometric mean over epitopes,
 whiskers = 95\% CI = between-epitope spread). Dashed line: noise floor S/N${=}1$.}
 \label{fig:hom}
@@ -49,7 +52,7 @@ neighbour rate for every epitope with $n\ge 30$ (one point per epitope; boxplots
 the per-cohort quartiles); the vertical gap to each cohort's non-self rate (red bar)
 is the S/N. immrep25's points hug its non-self line, whereas the verified cohorts sit
 orders of magnitude above. Table~\ref{tab:epi} lists all 20 immrep25 epitopes: in
-total they contribute only $\immWithinB$ (TR$\beta$) / $\immWithinA$ (TR$\alpha$)
+total they contribute only $\immWithinB$ (TCR$\beta$) / $\immWithinA$ (TCR$\alpha$)
 within-epitope Hamming-$1$ neighbours --- versus $\olgaWithinB$ / $\olgaWithinA$ for
 the $P_{\text{gen}}$-matched OLGA control and tens of thousands for the VDJdb cohorts
 --- and even that handful is concentrated in a few epitopes (e.g.\ YLFNADIWI) and is
@@ -57,7 +60,7 @@ entirely public (\S\ref{sec:publicity}).
 
 \begin{figure}[h]\centering
 \input{analysis/fig_beeswarm.tex}
-\caption{Per-epitope within-epitope neighbour rate (TR$\beta$, Hamming$\le 1$; each
+\caption{Per-epitope within-epitope neighbour rate (TCR$\beta$, Hamming$\le 1$; each
 point is one epitope, $n\ge 30$; boxplots = per-cohort quartiles). Red bars = cohort
 pooled cross-epitope (non-self) rate; the vertical gap is the homology S/N.}
 \label{fig:bee}
@@ -66,7 +69,7 @@ pooled cross-epitope (non-self) rate; the vertical gap is the homology S/N.}
 \begin{table}[h]\centering\small
 \input{analysis/immrep_epitope_table.tex}
 \caption{immrep25 positives by epitope ($n$ TCRs) and their count of within-epitope
-Hamming-$1$ CDR3 neighbours per chain, versus the OLGA control. Sorted by TR$\beta$.}
+Hamming-$1$ CDR3 neighbours per chain, versus the OLGA control. Sorted by TCR$\beta$.}
 \label{tab:epi}
 \end{table}
 
@@ -78,7 +81,7 @@ immrep25 and both OLGA controls are near-edgeless point clouds.
 
 \begin{figure}[h]\centering
 \includegraphics[width=\linewidth]{../results/figures/fig_homology_graph_TRB.pdf}
-\caption{TR$\beta$ homology graph per cohort (all epitopes $\ge 30$ records). Verified
+\caption{TCR$\beta$ homology graph per cohort (all epitopes $\ge 30$ records). Verified
 cohorts form dense epitope-coloured cliques; immrep25 and OLGA are near-edgeless.}
 \label{fig:homgraph}
 \end{figure}

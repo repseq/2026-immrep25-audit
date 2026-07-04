@@ -12,7 +12,7 @@ set ylabel "density (kde)"
 set grid ytics lc rgb '#dddddd'
 set key top left
 do for [pane in "A B"] {
-  set title sprintf("TR%s", pane)
+  set title (pane eq "A" ? "TCR$\\alpha$" : "TCR$\\beta$")
   fi = sprintf('pgen_immrep_%s.dat', pane)
   fo = sprintf('pgen_olga_%s.dat', pane)
   stats fi u 1 nooutput; Ni = STATS_records

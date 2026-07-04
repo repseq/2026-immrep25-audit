@@ -19,7 +19,8 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS = os.path.join(REPO, "results")
 FIGS = os.path.join(RESULTS, "figures"); os.makedirs(FIGS, exist_ok=True)
 
-EXPECT_COLOR = {"signal": "#2166ac", "weak": "#67a9cf", "noise": "#b2182b", "test": "#ef8a00"}
+EXPECT_COLOR = {"signal": "#2166ac", "weak": "#67a9cf", "noise": "#b2182b",
+                "test": "#ef8a00", "real": "#756bb1"}
 
 
 def _load_cohorts():
@@ -59,7 +60,7 @@ def fig_hierarchy():
     print("wrote fig_hierarchy.pdf")
 
 
-def fig_homology_graphs(coh, chain="B", min_n=30, target_nodes=1400):
+def fig_homology_graphs(coh, chain="B", min_n=30, max_nodes=1000):
     order = [c for c in HIERARCHY if c in coh]
     n = len(order); ncol = 4; nrow = int(np.ceil(n / ncol))
     fig, axes = plt.subplots(nrow, ncol, figsize=(3.6 * ncol, 3.4 * nrow))
@@ -67,9 +68,10 @@ def fig_homology_graphs(coh, chain="B", min_n=30, target_nodes=1400):
     for ax, name in zip(axes, order):
         lc = coh[name]["long"]; lc = lc[lc.chain == chain]
         vc = lc.epitope.value_counts(); eps = vc[vc >= min_n].index.to_numpy()   # ALL epitopes >= min_n
-        per_epi = int(min(50, max(8, target_nodes / max(1, len(eps)))))
-        parts = [lc[lc.epitope == e].sample(min(per_epi, (lc.epitope == e).sum()), random_state=0) for e in eps]
-        sub = pd.concat(parts, ignore_index=True) if len(parts) else lc.head(0)
+        sub = lc[lc.epitope.isin(eps)]                # all their records, no per-epitope subsampling
+        if len(sub) > max_nodes:                      # cap total nodes per cohort (fixed seed)
+            sub = sub.sample(max_nodes, random_state=42)
+        sub = sub.reset_index(drop=True)
         G = build_graph(sub); pos = sfdp_layout(G)
         cats = {e: i for i, e in enumerate(sorted(set(sub.epitope)))}
         cmap = plt.cm.tab10

@@ -1,8 +1,8 @@
 \section{Conclusion}\label{sec:conclusion}
 
 Across both probes and both chains the calibration cohorts recover the expected
-order, and the immrep25 positives fall at the bottom, just above the two OLGA random
-floors and one to three orders of magnitude below every quality cohort
+order, and the immrep25 positives fall at the bottom, just above the real-repertoire
+(AIRR) and OLGA floors and one to three orders of magnitude below every quality cohort
 (Fig.~\ref{fig:ladder}). Their weak homology is contributed by public TCRs and
 collapses to the floor when those are removed; their inter-chain pairing shows
 essentially no coupling. We therefore find \emph{no meaningful epitope-specific
@@ -15,27 +15,38 @@ random guessing on unseen peptides~\cite{Richardson2026}.
   rung/.style={draw,rounded corners,minimum width=52mm,minimum height=7mm,align=center}]
 \definecolor{sig}{HTML}{2166ac}\definecolor{weak}{HTML}{67a9cf}
 \definecolor{noise}{HTML}{b2182b}\definecolor{test}{HTML}{ef8a00}
-\node[rung,fill=sig!25]  (a) at (0,5.0) {VDJdb HQ \hfill S/N$\approx\hqHomB$ (TR$\beta$)};
+\node[rung,fill=sig!25]  (a) at (0,5.0) {VDJdb HQ \hfill S/N$\approx\hqHomB$ (TCR$\beta$)};
 \node[rung,fill=sig!18]  (b) at (0,4.1) {TCRvdb true \hfill S/N$\approx\trueHomB$};
 \node[rung,fill=sig!12]  (c) at (0,3.2) {TCRvdb false \hfill S/N$\approx\falseHomB$};
 \node[rung,fill=weak!25] (d) at (0,2.3) {VDJdb LQ \hfill S/N$\approx\lqHomB$};
 \node[rung,fill=test!30] (e) at (0,1.2) {\textbf{immrep25 pos} \hfill S/N$\approx\immHomB$};
-\node[rung,fill=noise!22](f) at (0,0.3) {OLGA (matched/raw) \hfill S/N$\approx\olgaMHomB$};
+\node[rung,fill=noise!22](f) at (0,0.3) {AIRR + OLGA controls \hfill S/N$\approx\olgaMHomB$};
 \draw[->,thick] (-3.4,0.0) -- (-3.4,5.4) node[above,align=center]{signal};
 \draw[dashed,gray] (-2.7,0.75) -- (2.7,0.75) node[right,black]{\scriptsize noise floor};
 \node[test,right=1mm of e,xshift=52mm,align=left]
   {$\leftarrow$ non-public: S/N$\to\npHomB$\\\phantom{x}\ \ MI $\approx\immMi$ bits};
 \end{tikzpicture}
-\caption{Signal-to-noise ladder (TR$\beta$ homology, one-vs-many). The immrep25
+\caption{Signal-to-noise ladder (TCR$\beta$ homology, one-vs-many). The immrep25
 positives sit one rung above the random floor; stripping public TCRs lowers them
 onto it.}
 \label{fig:ladder}
 \end{figure}
+
+\paragraph{Relation to reported prediction scores.} The IMMREP23 challenge reported
+that specificity can be predicted for \emph{seen} peptides with useful accuracy
+(median AUC$_{0.1}\gtrsim 0.7$)~\cite{Nielsen_2024}, whereas IMMREP25 found no method
+exceeded a best macro-AUC$_{0.1}$ of $0.60$ on \emph{unseen} peptides, barely above
+random~\cite{Richardson2026}. Our structural audit accounts for this gap without
+running any predictor: the unseen-peptide positives carry no epitope-specific homology
+or pairing signal beyond publicity, so a model has nothing epitope-specific to latch
+onto and can only exploit similarity to previously seen TCRs---which novel epitopes, by
+construction, do not provide.
 
 \paragraph{Caveats.} TCRvdb true/false separate less than expected because
 $p_{\text{adj}}$ scores differential enrichment in one screen rather than absence of
 specificity, so ``false'' still contains epitope-associated TCRs; and TCRvdb and
 VDJdb-HQ rest on only 2 and 5 epitopes respectively, so their absolute S/N is
 uncertain (wide CIs). Neither affects immrep25, whose 20 epitopes place it just above
-the OLGA floor on every probe. Reproduce with \texttt{bash scripts/fetch\_vdjdb.sh};
-\texttt{python src/build\_olga.py}; \texttt{python run\_audit.py}; \texttt{make}.
+the real-repertoire (AIRR) and OLGA floors on every probe. Reproduce with the fetch
+scripts (\texttt{fetch\_vdjdb.sh}, \texttt{fetch\_airr.sh}, \texttt{gen\_olga\_pool.sh}),
+then \texttt{build\_olga.py}, \texttt{build\_airr.py}, \texttt{run\_audit.py}, \texttt{make}.

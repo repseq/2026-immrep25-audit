@@ -35,6 +35,22 @@ def _write_dat(df: pd.DataFrame, name: str):
         df.to_csv(fh, sep=" ", index=False, header=False)
 
 
+def _swarm(y, binwidth=0.18, dx=0.035, maxw=0.34):
+    """Beeswarm x-offsets: bin points by y and spread each bin symmetrically (no y-jitter)."""
+    from collections import defaultdict
+    y = np.asarray(y, float)
+    off = np.zeros(len(y))
+    groups = defaultdict(list)
+    for i in np.argsort(y):
+        groups[int(round(y[i] / binwidth))].append(i)
+    for idxs in groups.values():
+        k = len(idxs)
+        pos = np.clip((np.arange(k) - (k - 1) / 2.0) * dx, -maxw, maxw)
+        for i, p in zip(idxs, pos):
+            off[i] = p
+    return off
+
+
 def run():
     coh = build_cohorts(include_olga=True)
     order = [c for c in HIERARCHY if c in coh]
@@ -73,9 +89,10 @@ def run():
     bee, box, ref = [], [], []
     for name in order:
         pe = per_ep[(name, "B")]
-        for _, r in pe.iterrows():
-            rate = max(r.r_self, 1e-4)
-            bee.append({"x": COLIDX[name] + rng.uniform(-0.12, 0.12), "rate": rate})
+        rates = np.maximum(pe.r_self.values, 1e-4) if len(pe) else np.array([])
+        xoff = _swarm(np.log10(rates)) if len(rates) else []
+        for rate, o in zip(rates, xoff):
+            bee.append({"x": COLIDX[name] + o, "rate": rate})
             box.append({"c": COLIDX[name], "rate": rate})
         rn = np.nanmedian(pe.r_nonself.values) if len(pe) else np.nan
         ref.append({"x": COLIDX[name], "r_nonself": max(rn, 1e-4) if rn == rn else 1e-4})
@@ -84,20 +101,22 @@ def run():
     _write_dat(pd.DataFrame(ref)[["x", "r_nonself"]], "homology_beeswarm_ref.dat")
 
     # immrep25 by-epitope table (within-epitope Hamming<=1 neighbours per chain)
-    peB = per_ep[("immrep25_pos", "B")][["epitope", "n", "m1"]].rename(columns={"m1": "mB"})
+    peB = per_ep[("immrep25_pos", "B")][["epitope", "n", "m1", "sn1"]].rename(columns={"m1": "mB", "sn1": "snB"})
     peA = per_ep[("immrep25_pos", "A")][["epitope", "m1"]].rename(columns={"m1": "mA"})
-    imm_tab = peB.merge(peA, on="epitope").sort_values("mB", ascending=False)
+    imm_tab = peB.merge(peA, on="epitope").sort_values("snB", ascending=False)
     om = {ch: int(per_ep[("olga_matched", ch)].m1.sum()) if ("olga_matched", ch) in per_ep else 0 for ch in "AB"}
+    olga_snB = dataset_sn(per_ep[("olga_matched", "B")], 1)["sn"]
     with open(os.path.join(ADAT, "immrep_epitope_table.tex"), "w") as fh:
-        fh.write("\\begin{tabular}{lrrr}\n\\toprule\n")
-        fh.write("epitope & $n$ & $\\beta$ nbrs & $\\alpha$ nbrs \\\\\n\\midrule\n")
+        fh.write("\\begin{tabular}{lrrrr}\n\\toprule\n")
+        fh.write("epitope & $n$ & $\\beta$ nbrs & $\\alpha$ nbrs & $\\beta$ S/N \\\\\n\\midrule\n")
         for _, r in imm_tab.iterrows():
-            fh.write("\\texttt{%s} & %d & %d & %d \\\\\n" % (r.epitope, r.n, r.mB, r.mA))
-        fh.write("\\midrule\n\\textbf{immrep25 total} & %d & %d & %d \\\\\n" %
-                 (int(imm_tab.n.sum()), int(imm_tab.mB.sum()), int(imm_tab.mA.sum())))
-        fh.write("OLGA pgen-matched & %d & %d & %d \\\\\n\\bottomrule\n\\end{tabular}\n" %
+            fh.write("\\texttt{%s} & %d & %d & %d & %.2f \\\\\n" % (r.epitope, r.n, r.mB, r.mA, r.snB))
+        fh.write("\\midrule\n\\textbf{immrep25 (geom.\\ mean)} & %d & %d & %d & %.2f \\\\\n" %
+                 (int(imm_tab.n.sum()), int(imm_tab.mB.sum()), int(imm_tab.mA.sum()),
+                  dataset_sn(per_ep[("immrep25_pos", "B")], 1)["sn"]))
+        fh.write("OLGA pgen-matched & %d & %d & %d & %.2f \\\\\n\\bottomrule\n\\end{tabular}\n" %
                  (len(coh["olga_matched"]["paired"]) if "olga_matched" in coh else 0,
-                  om["B"], om["A"]))
+                  om["B"], om["A"], olga_snB))
     imm_within = (int(imm_tab.mB.sum()), int(imm_tab.mA.sum()), om["B"], om["A"])
 
     # ---------------- pairing (one-vs-many, excess bits) ----------------
@@ -122,8 +141,10 @@ def run():
     for name in order:
         lc = coh[name]["long"]; lc = lc[lc.chain == "B"]
         vc = lc.epitope.value_counts(); eps = vc[vc >= MIN_N].index.to_numpy()
-        parts = [lc[lc.epitope == e].sample(min(80, (lc.epitope == e).sum()), random_state=0) for e in eps]
-        sub = pd.concat(parts, ignore_index=True) if len(parts) else lc.head(0)
+        sub = lc[lc.epitope.isin(eps)]                      # all nodes of qualifying epitopes
+        if len(sub) > 1000:                                 # cap per cohort (fixed seed), matches figure
+            sub = sub.sample(1000, random_state=42)
+        sub = sub.reset_index(drop=True)
         st = graph_stats(build_graph(sub)); st["cohort"] = name; st["label"] = COHORT_META[name]["label"]
         st["n_epitopes"] = len(eps); grows.append(st)
     gdf = pd.DataFrame(grows); gdf.to_csv(os.path.join(RESULTS, "graph_stats.csv"), index=False)
@@ -179,6 +200,7 @@ def run():
         "falseHomB": H("tcrvdb_false", "B"),
         "olgaMHomB": H("olga_matched", "B"), "olgaRHomB": H("olga_random", "B"),
         "olgaMHomA": H("olga_matched", "A"), "olgaRHomA": H("olga_random", "A"),
+        "airrHomB": H("airr_control", "B"), "airrHomA": H("airr_control", "A"),
         "immGene": P("immrep25_pos", "gene_mean"), "immMi": P("immrep25_pos", "mi_mean"),
         "hqGene": P("vdjdb_hq", "gene_mean"), "trueMi": P("tcrvdb_true", "mi_mean"),
         "olgaMGene": P("olga_matched", "gene_mean"), "olgaMMi": P("olga_matched", "mi_mean"),

@@ -2,7 +2,7 @@
 
 \paragraph{Cohorts.} Every cohort is reduced to a common per-chain schema
 (one CDR3 with its V/J and epitope) and a paired schema
-($\text{cdr3}\alpha,V\alpha,J\alpha,\text{cdr3}\beta,V\beta,J\beta$, epitope).
+($\mathrm{CDR3}_\alpha,V_\alpha,J_\alpha,\mathrm{CDR3}_\beta,V_\beta,J_\beta$, epitope).
 The six cohorts span the expected signal-to-noise (S/N) range:
 
 \begin{center}\small
@@ -15,6 +15,7 @@ VDJdb HQ     & VDJdb human MHC-I, $\ge 2$ references per (TCR, epitope) & strong
 VDJdb LQ     & VDJdb human MHC-I, single reference & weakly supported \\
 TCRvdb false & TCRvdb, $p_{\text{adj}}\ge 10^{-5}$ & experimentally refuted \\
 immrep25 pos & immrep25 \texttt{label}=1 & \textbf{system under test} \\
+AIRR control & real bulk repertoire (isalgo/airr\_control) & real-data floor \\
 OLGA pgen-matched & $P_{\text{gen}}$-matched to immrep25 pos & noise floor \\
 OLGA random  & raw OLGA generation & noise floor \\
 \bottomrule
@@ -37,9 +38,11 @@ others (each epitope with $\ge 30$ records vs.\ the rest of its cohort) and then
 aggregated to a dataset value---geometric mean $\pm$ 95\% CI for homology S/N, mean
 $\pm$ 95\% CI for pairing---across epitopes. The signal therefore attaches to
 individual epitopes and the reported error bars are the epitope-to-epitope spread
-($n$ = number of qualifying epitopes); no bootstrap resampling is used. The two
-OLGA controls fix the noise floor: raw random draws and draws whose per-chain
-generation probability is matched to immrep25 (so chance matchability is controlled).
+($n$ = number of qualifying epitopes); no bootstrap resampling is used. Three controls fix
+the noise floor: two OLGA controls (raw random draws, and draws whose per-chain
+generation probability is matched to immrep25 so chance matchability is controlled) and
+a real \emph{post-thymic-selection} bulk repertoire (AIRR control), all partitioned
+into synthetic epitope groups of the same shape as immrep25.
 
 \paragraph{Pipeline.}
 \begin{center}

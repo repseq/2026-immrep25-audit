@@ -14,13 +14,22 @@ For every epitope with $\ge 30$ paired records we measure two signals as the
   shuffles (which keep the marginals but destroy coupling).
 \end{itemize}
 Both are $0$ under no signal and grow (in bits) with genuine per-epitope structure.
+Writing $X$ for either statistic and $\{X^{(k)}_{\text{null}}\}$ for its $K$
+permutation replicates, the excess is $\Delta X_e = X_e-\overline{X^{}_{\text{null}}}$
+and the standardized effect is
+\[
+z_e=\frac{X_e-\overline{X_{\text{null}}}}{\mathrm{sd}(X_{\text{null}})}.
+\]
+We report the excess $\Delta X$ (in bits) rather than $z$, because for small epitopes
+the null variance can collapse ($\mathrm{sd}\to 0$) and inflate $z$; the excess is
+stable and keeps the natural unit.
 
 \paragraph{Result.} Figure~\ref{fig:pair} shows both. The verified cohorts carry
 substantial gene-usage bias (VDJdb-HQ $\hqGene$ bits) and real inter-chain coupling
 (TCRvdb-true $\trueMi$ bits). immrep25 positives are near the floor on both:
 gene-usage bias $\immGene$ bits and, decisively, an inter-chain coupling of only
 $\immMi$ bits---an order of magnitude below every quality cohort and barely above the
-OLGA controls ($\olgaMGene$ / $\olgaMMi$ bits). The residual gene-usage bias is
+AIRR and OLGA controls ($\olgaMGene$ / $\olgaMMi$ bits). The residual gene-usage bias is
 consistent with the public, HLA-restricted composition of the positives rather than
 epitope-specific pairing.
 

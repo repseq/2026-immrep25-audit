@@ -1,8 +1,9 @@
 n_nodes,n_edges,assortativity,modularity,within_frac,cohort,label,n_epitopes
-160,122,1.0,0.49879064767535614,1.0,tcrvdb_true,TCRvdb true,2
-277,569,1.0,0.6561877434280226,1.0,vdjdb_hq,VDJdb HQ,5
-9862,6080,0.6385529481161606,0.6011863881795361,0.6597039473684211,vdjdb_lq,VDJdb LQ,151
-139,39,1.0,0.22353714661406965,1.0,tcrvdb_false,TCRvdb false,2
+306,408,1.0,0.49729671280276816,1.0,tcrvdb_true,TCRvdb true,2
+1000,14044,1.0,0.006251348145280665,1.0,vdjdb_hq,VDJdb HQ,5
+1000,71,0.6660787771898884,0.5618924816504662,0.7183098591549296,vdjdb_lq,VDJdb LQ,151
+308,56,1.0,0.4770408163265306,1.0,tcrvdb_false,TCRvdb false,2
 1000,59,0.753910323253389,0.6230968112611319,0.7966101694915254,immrep25_pos,immrep25 pos,20
+1000,0,,,,airr_control,AIRR control,20
 999,0,,,,olga_matched,OLGA pgen-matched,20
 1000,1,-1.0,-0.5,0.0,olga_random,OLGA random,20
