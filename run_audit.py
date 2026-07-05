@@ -106,8 +106,9 @@ def run():
     imm_tab = peB.merge(peA, on="epitope").sort_values("snB", ascending=False)
     def _srow(cohort):
         peb, pea = per_ep[(cohort, "B")], per_ep[(cohort, "A")]
-        return (len(coh[cohort]["paired"]), int(peb.m1.sum()), int(pea.m1.sum()),
-                dataset_sn(peb, 1)["sn"])
+        pr = coh[cohort]["paired"]
+        n = len(pr) if pr is not None else int((coh[cohort]["long"].chain == "B").sum())
+        return (n, int(peb.m1.sum()), int(pea.m1.sum()), dataset_sn(peb, 1)["sn"])
     with open(os.path.join(ADAT, "immrep_epitope_table.tex"), "w") as fh:
         fh.write("\\begin{tabular}{lrrrr}\n\\toprule\n")
         fh.write("epitope & $n$ & $\\beta$ nbrs & $\\alpha$ nbrs & $\\beta$ S/N \\\\\n\\midrule\n")
@@ -116,12 +117,14 @@ def run():
         fh.write("\\midrule\n")
         summary = [("\\textbf{immrep25 (geom.\\ mean)}", "immrep25_pos"),
                    ("AIRR random", "airr_control"), ("AIRR non-random", "airr_top"),
-                   ("OLGA random", "olga_random")]
+                   ("OLGA random", "olga_random"),
+                   ("MLR expanded ($\\beta$ only)", "mlr_prolif")]
         for label, cohort in summary:
             if cohort not in coh:
                 continue
             n, mb, ma, sn = _srow(cohort)
-            fh.write("%s & %d & %d & %d & %.2f \\\\\n" % (label, n, mb, ma, sn))
+            a_str = "--" if coh[cohort]["paired"] is None else "%d" % ma
+            fh.write("%s & %d & %d & %s & %.2f \\\\\n" % (label, n, mb, a_str, sn))
         fh.write("\\bottomrule\n\\end{tabular}\n")
     om = _srow("olga_random")
     imm_within = (int(imm_tab.mB.sum()), int(imm_tab.mA.sum()), om[1], om[2])
@@ -146,6 +149,8 @@ def run():
     # ---------------- graph stats (chain B, ALL epitopes >= MIN_N records) ----------------
     grows = []
     for name in order:
+        if name == "mlr_prolif":            # beta-only control; not shown in the graph panel
+            continue
         lc = coh[name]["long"]; lc = lc[lc.chain == "B"]
         vc = lc.epitope.value_counts(); eps = vc[vc >= MIN_N].index.to_numpy()
         sub = lc[lc.epitope.isin(eps)]                      # all nodes of qualifying epitopes
@@ -208,6 +213,7 @@ def run():
         "olgaRHomB": H("olga_random", "B"), "olgaRHomA": H("olga_random", "A"),
         "airrHomB": H("airr_control", "B"), "airrHomA": H("airr_control", "A"),
         "airrTHomB": H("airr_top", "B"), "airrTHomA": H("airr_top", "A"),
+        "mlrHomB": H("mlr_prolif", "B"),
         "immGene": P("immrep25_pos", "gene_mean"), "immMi": P("immrep25_pos", "mi_mean"),
         "hqGene": P("vdjdb_hq", "gene_mean"), "trueMi": P("tcrvdb_true", "mi_mean"),
         "olgaRGene": P("olga_random", "gene_mean"), "olgaRMi": P("olga_random", "mi_mean"),

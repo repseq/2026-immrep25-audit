@@ -111,16 +111,24 @@ def per_epitope_sn(long_chain: pd.DataFrame, max_d: int = 3, min_n: int = 30,
     One row per epitope with >= min_n records; columns m<d>, l<d>, sn<d> (cumulative
     Hamming <= d) for d in 1..max_d, plus the d=1 within-epitope neighbour rate.
     Large sets are capped (epitope to max_e, rest to max_rest) for tractability.
+
+    If the frame has a `reaction` column the "rest" (non-self) background excludes
+    epitopes from the same reaction -- used by the mlr_prolif control, whose replicate
+    epitopes share the same expanded clones and would otherwise inflate cross-epitope
+    homology. Without the column, "rest" is simply every other epitope (default).
     """
     rng = np.random.default_rng(seed)
     vc = long_chain.epitope.value_counts()
     eps = vc[vc >= min_n].index.to_numpy()
+    grouped = "reaction" in long_chain.columns
+    ep2grp = long_chain.groupby("epitope").reaction.first().to_dict() if grouped else {}
     rows = []
     for e in eps:
         E = long_chain[long_chain.epitope == e]
         if len(E) > max_e:
             E = E.sample(max_e, random_state=int(rng.integers(1 << 31)))
-        R = long_chain[long_chain.epitope != e]
+        R = (long_chain[long_chain.reaction != ep2grp[e]] if grouped
+             else long_chain[long_chain.epitope != e])
         if len(R) > max_rest:
             R = R.sample(max_rest, random_state=int(rng.integers(1 << 31)))
         cw = count_pairs(E.cdr3.to_numpy(), np.array(["x"] * len(E)), max_d=max_d)
@@ -150,7 +158,7 @@ def per_epitope_sn(long_chain: pd.DataFrame, max_d: int = 3, min_n: int = 30,
 
 def dataset_sn(per_ep: pd.DataFrame, d: int = 1):
     """Geometric mean +/- 95% CI (log10 SE) of per-epitope S/N across a cohort."""
-    s = per_ep["sn%d" % d].values
+    s = np.asarray(per_ep["sn%d" % d].values, dtype=float)
     s = s[np.isfinite(s) & (s > 0)]
     if len(s) == 0:
         return dict(sn=np.nan, lo=np.nan, hi=np.nan, n_ep=0)

@@ -7,3 +7,4 @@ immrep25_pos,immrep25 pos,1000,1000,1000,20
 airr_control,AIRR random,1000,1000,1000,20
 airr_top,AIRR non-random,1000,1000,1000,20
 olga_random,OLGA random,1000,1000,1000,20
+mlr_prolif,MLR expanded (beta),0,0,2400,12

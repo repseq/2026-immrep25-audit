@@ -3,7 +3,7 @@
 \paragraph{Cohorts.} Every cohort is reduced to a common per-chain schema
 (one CDR3 with its V/J and epitope) and a paired schema
 ($\mathrm{CDR3}_\alpha,V_\alpha,J_\alpha,\mathrm{CDR3}_\beta,V_\beta,J_\beta$, epitope).
-The six cohorts span the expected signal-to-noise (S/N) range:
+The cohorts span the expected signal-to-noise (S/N) range:
 
 \begin{center}\small
 \begin{tabular}{@{}lll@{}}
@@ -18,6 +18,7 @@ immrep25 pos & immrep25 \texttt{label}=1 & \textbf{system under test} \\
 AIRR random & pooled real repertoire (isalgo/airr\_control), random labels & real-data floor \\
 AIRR non-random & 20 largest SRA donors; epitope $=$ a donor's top-50 clonotypes & structured real control \\
 OLGA random  & raw OLGA generation, random labels & noise floor \\
+MLR expanded ($\beta$) & real proliferating TCR$\beta$ clones; epitope $=$ a replicate's top-200 & MIRA-analogue control \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -49,6 +50,20 @@ virtual epitope. This mimics how a real epitope-specific dataset is built (expan
 clones per sample), but the ``epitopes'' are individual donors, not antigens. Two
 random-label floors (OLGA random and the pooled AIRR random) are kept for reference. The
 20 donors are listed in \texttt{results/airr\_donors.tsv}.
+
+\paragraph{A control that mimics immrep25's own methodology.} immrep25's positive
+$\beta$ labels come from a MIRA assay that identifies \emph{expanded} (proliferating)
+TCR$\beta$ clones responding to a peptide pool~\cite{Richardson2026}; the $\alpha$ chain
+is added afterward by separate pairing. We therefore build a $\beta$-only analogue,
+\textbf{MLR expanded}, from real mixed-lymphocyte-reaction proliferating repertoires
+(isalgo/airr\_benchmark \texttt{alice/mlr})---genuinely antigen-driven expanded clones.
+The six proliferating samples are in fact three independent reactions, each captured in
+two heavily overlapping duplicate samples (sharing $\sim$50--65\% of their top clones),
+with two sequencing replicates apiece. We take each replicate's top-200 TCR$\beta$
+clonotypes (by read count) as one virtual epitope---four per reaction, twelve in
+all---and, because same-reaction replicates share the same expanded clones, score each
+one-vs-many against the \emph{other reactions} only (never its own siblings). This is the
+closest possible real-data mimic of how immrep25's positives were generated.
 
 \paragraph{Pipeline.}
 \begin{center}

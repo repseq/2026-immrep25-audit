@@ -31,7 +31,13 @@ between donors), so the ``epitopes'' carry no convergent structure. immrep25's e
 therefore specific to its epitope$\to$TCR assignments (i.e.\ publicity,
 \S\ref{sec:publicity}), not to abundance or expansion in real data
 (AIRR random $\airrHomB$, OLGA random $\olgaRHomB$). The same holds on TCR$\alpha$
-(immrep25 $\immHomA$). immrep25's CI excludes $1$ but lies one to three orders of
+(immrep25 $\immHomA$). Most tellingly, the \textbf{MLR expanded} control---real
+proliferating TCR$\beta$ clones assembled exactly as immrep25's MIRA positives were
+(\S\ref{sec:data})---gives S/N $=\mlrHomB$, statistically indistinguishable from
+immrep25's $\immHomB$ (overlapping CIs) and built from the same tiny handful of
+neighbour pairs. In other words, immrep25's weak $\beta$ homology is precisely what
+antigen-driven clonal expansion yields \emph{without} any epitope-specific
+convergence---not a signature of specificity. immrep25's CI excludes $1$ but lies one to three orders of
 magnitude below every quality cohort. As the substitution radius grows
 (Fig.~\ref{fig:dlines}) the verified cohorts stay high while immrep25 and all controls
 remain near the floor across $d=1,2,3$.
@@ -40,7 +46,8 @@ remain near the floor across $d=1,2,3$.
 \input{analysis/fig_homology.tex}
 \caption{Homology S/N ($d{=}1$) per cohort, TCR$\alpha$ and TCR$\beta$ (one-vs-many:
 each epitope with $\ge 30$ records vs.\ the rest; bar = geometric mean over epitopes,
-whiskers = 95\% CI = between-epitope spread). Dashed line: noise floor S/N${=}1$.}
+whiskers = 95\% CI = between-epitope spread). Dashed line: noise floor S/N${=}1$. The
+MLR expanded control is TCR$\beta$-only, so it has no $\alpha$ bar.}
 \label{fig:hom}
 \end{figure}
 
@@ -76,7 +83,8 @@ pooled cross-epitope (non-self) rate; the vertical gap is the homology S/N.}
 \input{analysis/immrep_epitope_table.tex}
 \caption{immrep25 positives by epitope ($n$ TCRs) and their count of within-epitope
 Hamming-$1$ CDR3 neighbours per chain and $\beta$ S/N, versus the structured/random
-controls. Sorted by $\beta$ S/N.}
+controls (the $\beta$-only MLR expanded control has no $\alpha$ count). Sorted by
+$\beta$ S/N.}
 \label{tab:epi}
 \end{table}
 

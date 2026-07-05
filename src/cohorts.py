@@ -13,7 +13,7 @@ from load_data import (load_immrep, load_tcrvdb, load_vdjdb,
 _REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 HIERARCHY = ["tcrvdb_true", "vdjdb_hq", "vdjdb_lq", "tcrvdb_false",
-             "immrep25_pos", "airr_control", "airr_top", "olga_random"]
+             "immrep25_pos", "airr_control", "airr_top", "olga_random", "mlr_prolif"]
 
 # nice labels + a stable colour index for figures
 COHORT_META = {
@@ -25,6 +25,7 @@ COHORT_META = {
     "airr_control": {"label": "AIRR random",  "expect": "real"},
     "airr_top":     {"label": "AIRR non-random", "expect": "real"},
     "olga_random":  {"label": "OLGA random",  "expect": "noise"},
+    "mlr_prolif":   {"label": "MLR expanded (beta)", "expect": "real"},
 }
 
 
@@ -72,6 +73,12 @@ def build_cohorts(include_olga: bool = False, olga_paired: pd.DataFrame | None =
                 continue
             p = _mk_paired(src, name, "noise")
             coh[name] = {"paired": p, "long": _pair_to_long(p)}
+
+        # beta-only expanded-clone control (already in long form, carries `reaction`)
+        mlr = _load_olga("mlr_prolif")
+        if mlr is not None:
+            lg = mlr[mlr.cdr3.map(valid_cdr3)].reset_index(drop=True)
+            coh["mlr_prolif"] = {"paired": None, "long": lg}
 
     return coh
 

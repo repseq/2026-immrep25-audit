@@ -38,12 +38,21 @@ control (OLGA) plus real-repertoire controls (AIRR) fix the noise floor at S/N=1
 | TCRvdb false (p_adj≥1e-5) | 86 | 0.15 | 0.33 |
 | VDJdb LQ (1 ref) | 30 | 0.96 | 0.44 |
 | **immrep25 positives** | **2.7** | **0.20** | **0.05** |
+| MLR expanded (real proliferating β, MIRA-analogue) | 1.9 | — | — |
 | AIRR non-random (20 real donors, top-50 clonotypes) | 1.04 | ~0.02 | ~0 |
 | AIRR random (pooled real repertoire, random labels) | 1.0 | 0.00 | ~0 |
 | OLGA random (raw generation) | 0.97 | 0.00 | ~0 |
 
 - immrep25 positives sit **just above the noise floor** (CI excludes 1) and **one to
   three orders of magnitude below every quality cohort**, on both chains and both probes.
+- A control built **exactly like immrep25's own MIRA methodology** — real *proliferating*
+  (expanded) TCRβ clones from mixed-lymphocyte reactions (isalgo/airr_benchmark
+  `alice/mlr`) — gives homology S/N = **1.9** [1.26, 2.81], **statistically
+  indistinguishable from immrep25's 2.7** and built from the same tiny handful of neighbour
+  pairs. immrep25's weak β homology is exactly what antigen-driven clonal expansion yields
+  *without* epitope-specific convergence. (6 proliferating samples = 3 independent
+  reactions × 2 duplicate samples × 2 replicas; each replicate's top-200 β clonotypes = one
+  virtual epitope, 12 in all, scored against the *other* reactions only.)
 - The floor holds even for a **structured real-data control**: **AIRR non-random**, built
   from the **20 largest real donor samples** (isalgo/airr_benchmark SRA), where each donor's
   top-50 expanded TRA/TRB clonotypes form one virtual "epitope". This mimics how an
@@ -76,9 +85,11 @@ are used for the appendix. Install: `pip install -r requirements.txt`.
 ```bash
 bash scripts/fetch_vdjdb.sh        # public VDJdb release into dump/ (not committed)
 bash scripts/fetch_airr.sh         # AIRR pooled + SRA donor samples into cache/ (not committed)
+bash scripts/fetch_mlr.sh          # MLR proliferating samples into cache/ (not committed)
 bash scripts/gen_olga_pool.sh      # 100k/chain OLGA pool with pgen, in parallel (GNU parallel)
 python src/build_olga.py           # OLGA random control -> results/olga_random.tsv
 python src/build_airr.py           # AIRR random + non-random (20 donors) -> results/airr_*.tsv
+python src/build_mlr.py            # MLR expanded beta-only control -> results/mlr_prolif.tsv
 python run_audit.py                # metrics -> results/*.csv, appendix/analysis/*.dat, macros
 python src/compute_1mm.py && python src/analyze_1mm.py   # 1-mm neighborhood pgen (degree check)
 python src/figures.py              # matplotlib figures -> results/figures/
@@ -109,5 +120,10 @@ python tests/test_homology.py      # unit tests
   isalgo/airr_control), and **AIRR non-random** (20 largest real donor samples from
   isalgo/airr_benchmark SRA; each donor's top-50 TRA/TRB clonotypes = one virtual epitope).
   OLGA/AIRR-random use random epitope labels; AIRR non-random uses real donor grouping.
+- **MLR expanded (β-only MIRA-analogue)**: real proliferating TCRβ clones from
+  mixed-lymphocyte reactions (isalgo/airr_benchmark `alice/mlr`); each replicate's top-200
+  β clonotypes = one virtual epitope (12 across 3 reactions), scored one-vs-many against the
+  *other reactions only* (same-reaction replicates share the same expanded clones). Mimics
+  how immrep25's positives were generated (expanded β clones, α added afterward).
 
 Authors: Anna E. Koneva & Mikhail Shugay (ISALGO lab) · correspondence: mikhail.shugay@gmail.com
