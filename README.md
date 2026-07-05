@@ -21,15 +21,15 @@ Verified cohorts (VDJdb-HQ, TCRvdb-true) form dense epitope-coloured cliques;
    and a per-epitope breakdown.
 3. [**Pairing test**](src/pairing.py) — per-epitope V/J gene-usage bias and
    inter-chain mutual information vs permutation nulls.
-4. [**OLGA control**](src/olga_control.py) — pgen-matched random TCRs as the noise floor.
+4. [**Controls**](src/build_airr.py) — real (AIRR pooled + 20 SRA donors) and generative (OLGA) noise floors.
 5. [**Publicity control**](src/publicity.py) — is the residual signal just public TCRs?
 6. [**Appendix**](appendix/immrep25-audit.pdf) — gnuplot + TikZ LaTeX report.
 
 ## Result
 
 **One-vs-many** per epitope (each epitope with ≥30 records scored vs. the rest of its
-cohort), aggregated across epitopes (geometric mean ± 95% CI; no bootstrap). Two OLGA
-controls fix the noise floor at S/N=1. TRβ:
+cohort), aggregated across epitopes (geometric mean ± 95% CI; no bootstrap). A generative
+control (OLGA) plus real-repertoire controls (AIRR) fix the noise floor at S/N=1. TRβ:
 
 | cohort | homology S/N (β) | gene-bias (bits) | inter-chain MI (bits) |
 |---|--:|--:|--:|
@@ -38,20 +38,19 @@ controls fix the noise floor at S/N=1. TRβ:
 | TCRvdb false (p_adj≥1e-5) | 86 | 0.15 | 0.33 |
 | VDJdb LQ (1 ref) | 30 | 0.96 | 0.44 |
 | **immrep25 positives** | **2.7** | **0.20** | **0.05** |
-| OLGA pgen-ladder (per-epitope pgen-matched) | 0.95 | −0.01 | ~0 |
-| AIRR rank-ladder (frequency-rank bins) | 0.86 | 0.02 | ~0 |
-| AIRR random (real, random labels) | 1.0 | 0.00 | ~0 |
-| OLGA random | 0.97 | 0.00 | ~0 |
+| AIRR non-random (20 real donors, top-50 clonotypes) | 1.04 | ~0.02 | ~0 |
+| AIRR random (pooled real repertoire, random labels) | 1.0 | 0.00 | ~0 |
+| OLGA random (raw generation) | 0.97 | 0.00 | ~0 |
 
 - immrep25 positives sit **just above the noise floor** (CI excludes 1) and **one to
   three orders of magnitude below every quality cohort**, on both chains and both probes.
-- The floor holds even for **structured** controls that could otherwise manufacture
-  within-epitope homology: an **OLGA pgen-ladder** (each control epitope pgen-matched to
-  the corresponding immrep25 epitope) and an **AIRR rank-ladder** (real clonotypes binned
-  by clone frequency). Neither rises — immrep25's excess is specific to its epitope→TCR
-  assignments (publicity), not to pgen, generation degree, or clone frequency. Strikingly,
-  the AIRR rank-ladder has *more* raw within-group α-neighbors (93) than immrep25 (53) yet
-  S/N 0.86 — homology without epitope concentration.
+- The floor holds even for a **structured real-data control**: **AIRR non-random**, built
+  from the **20 largest real donor samples** (isalgo/airr_benchmark SRA), where each donor's
+  top-50 expanded TRA/TRB clonotypes form one virtual "epitope". This mimics how an
+  epitope-specific dataset is assembled, yet S/N stays at **1.04** — each donor's expanded
+  clones are private (no β clonotype is shared between donors), so there is no convergent
+  structure. immrep25's excess is specific to its epitope→TCR assignments (publicity), not
+  to abundance/expansion in real data. Donors recorded in `results/airr_donors.tsv`.
 - Reported prediction scores agree: IMMREP23 reached median AUC₀.₁ ≳ 0.7 on *seen*
   peptides ([Nielsen 2024](https://doi.org/10.1016/j.immuno.2024.100045)) but IMMREP25's best was macro-AUC₀.₁ = 0.60 on *unseen* — our audit explains why.
 - Their weak within-epitope homology is **publicity**: 74.5% are within Hamming≤1 of a
@@ -59,12 +58,11 @@ controls fix the noise floor at S/N=1. TRβ:
   **0** for the OLGA control), concentrated in a few epitopes (YLFNADIWI alone = 20).
   Removing public TCRs drops homology S/N to **1.00** (β) / 1.37 (α).
 - **Negligible inter-chain α–β coupling** (0.05 bits vs ~1 bit for verified cohorts).
-- **Degree check (1-mm neighborhood pgen, à la mirpy):** immrep25 overlaps its point-pgen-matched
-  OLGA control (Δ median ≈ 0.01–0.03 dex), so the control captures generation *degree* too —
-  the residual homology is not a density artifact. Real repertoire degree spans a decade by
-  sampling: **AIRR unique** clonotypes are *lower* degree than OLGA, **AIRR top-freq** (abundant
-  public clones) are the *highest* of any cohort — yet **both sit at homology S/N≈1**. The S/N
-  is normalized against random partitions, so it reflects epitope-specificity, not degree.
+- **Degree check (1-mm neighborhood pgen, à la mirpy):** generation "degree" varies widely
+  across cohorts — the pooled AIRR-random repertoire is lowest, OLGA random intermediate, and
+  immrep25 together with the abundant AIRR non-random donor clones highest — **yet every control
+  sits at homology S/N≈1**. The S/N is normalized against random partitions, so it reflects
+  epitope-specificity, not absolute degree.
 
 **Conclusion:** no meaningful epitope-specific signal in the immrep25 positives beyond
 noise and publicity — consistent with the benchmark's own finding that models cannot
@@ -77,10 +75,10 @@ are used for the appendix. Install: `pip install -r requirements.txt`.
 
 ```bash
 bash scripts/fetch_vdjdb.sh        # public VDJdb release into dump/ (not committed)
-bash scripts/fetch_airr.sh         # real AIRR control repertoire into cache/ (not committed)
+bash scripts/fetch_airr.sh         # AIRR pooled + SRA donor samples into cache/ (not committed)
 bash scripts/gen_olga_pool.sh      # 100k/chain OLGA pool with pgen, in parallel (GNU parallel)
-python src/build_olga.py           # OLGA random + pgen-matched cohorts -> results/olga_*.tsv
-python src/build_airr.py           # AIRR real-repertoire control -> results/airr_control.tsv
+python src/build_olga.py           # OLGA random control -> results/olga_random.tsv
+python src/build_airr.py           # AIRR random + non-random (20 donors) -> results/airr_*.tsv
 python run_audit.py                # metrics -> results/*.csv, appendix/analysis/*.dat, macros
 python src/compute_1mm.py && python src/analyze_1mm.py   # 1-mm neighborhood pgen (degree check)
 python src/figures.py              # matplotlib figures -> results/figures/
@@ -106,9 +104,10 @@ python tests/test_homology.py      # unit tests
   reported for d=1,2,3 (geometric mean over epitopes). d=0 isolates publicity.
 - **Pairing**: per-epitope V/J gene-usage bias (KL vs background) and Miller–Madow
   inter-chain MI, each as **excess over a permutation null in bits** (→0 under no signal).
-- **Controls (noise floor, S/N=1)**: **OLGA random** (100k/chain pool sampled uniformly),
-  **OLGA pgen-matched** (stratified to the immrep25 per-chain pgen), and **AIRR control**
-  (1000 real post-thymic-selection clonotypes/chain, reservoir-sampled from a bulk human
-  repertoire). All α/β paired at random into immrep-shaped synthetic epitope groups.
+- **Controls (noise floor)**: **OLGA random** (100k/chain pool sampled uniformly),
+  **AIRR random** (unique clonotypes reservoir-sampled from a pooled human repertoire,
+  isalgo/airr_control), and **AIRR non-random** (20 largest real donor samples from
+  isalgo/airr_benchmark SRA; each donor's top-50 TRA/TRB clonotypes = one virtual epitope).
+  OLGA/AIRR-random use random epitope labels; AIRR non-random uses real donor grouping.
 
 Authors: Anna E. Koneva & Mikhail Shugay (ISALGO lab) · correspondence: mikhail.shugay@gmail.com

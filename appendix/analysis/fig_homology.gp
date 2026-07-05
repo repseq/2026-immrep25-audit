@@ -12,8 +12,8 @@ set ylabel "homology S/N (self / non-self, $d{=}1$)"
 set grid ytics lc rgb '#dddddd'
 set bmargin 4.2
 set xtics out nomirror rotate by 40 right offset 0,-0.1 font ",7"
-set xtics ("TCRvdb true" 0,"VDJdb HQ" 1,"VDJdb LQ" 2,"TCRvdb false" 3,"immrep25" 4,"AIRR rand" 5,"AIRR ladder" 6,"OLGA pgen-lad" 7,"OLGA rand" 8)
-set xrange [-0.6:8.6]
+set xtics ("TCRvdb true" 0,"VDJdb HQ" 1,"VDJdb LQ" 2,"TCRvdb false" 3,"immrep25" 4,"AIRR rand" 5,"AIRR nonrand" 6,"OLGA rand" 7)
+set xrange [-0.6:7.6]
 RGB(i) = (i<=1) ? 0x2166ac : (i==2) ? 0x67a9cf : (i==4) ? 0xef8a00 : (i==5) ? 0x9e9ac8 : (i==6) ? 0x6a51a3 : 0xb2182b
 do for [pane in "A B"] {
   set title (pane eq "A" ? "TCR$\\alpha$" : "TCR$\\beta$")

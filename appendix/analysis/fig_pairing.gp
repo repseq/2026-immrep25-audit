@@ -7,8 +7,8 @@ set ylabel "excess over null (bits)"
 set grid ytics lc rgb '#dddddd'
 set bmargin 4.2
 set xtics out nomirror rotate by 40 right offset 0,-0.1 font ",7"
-set xtics ("TCRvdb true" 0,"VDJdb HQ" 1,"VDJdb LQ" 2,"TCRvdb false" 3,"immrep25" 4,"AIRR rand" 5,"AIRR ladder" 6,"OLGA pgen-lad" 7,"OLGA rand" 8)
-set xrange [-0.6:8.6]
+set xtics ("TCRvdb true" 0,"VDJdb HQ" 1,"VDJdb LQ" 2,"TCRvdb false" 3,"immrep25" 4,"AIRR rand" 5,"AIRR nonrand" 6,"OLGA rand" 7)
+set xrange [-0.6:7.6]
 set yrange [-0.2:*]
 set key top right
 plot 'pairing_excess.dat' u ($1-0.12):3:4:5 w yerrorbars pt 5 ps 0.6 lc rgb '#1b7837' title 'gene-usage bias', \

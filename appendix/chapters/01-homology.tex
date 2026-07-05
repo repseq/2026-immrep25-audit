@@ -23,13 +23,14 @@ S/N $\gg 1$, noise $\Rightarrow$ S/N $\approx 1$.
 VDJdb-HQ $>$ TCRvdb-true $>$ TCRvdb-false $>$ VDJdb-LQ $\gg$ immrep25 $>$ OLGA.
 On TCR$\beta$ the verified cohorts reach S/N $=\hqHomB$ (VDJdb-HQ) and $\trueHomB$
 (TCRvdb-true), whereas immrep25 positives give only $\immHomB$ and \emph{every} control
-sits at the floor---including the two structured ones: the OLGA pgen-ladder
-($\olgaMHomB$), whose epitopes match immrep25's per-epitope generation degree, and the
-AIRR rank-ladder ($\airrTHomB$), whose epitopes are bins of equally-public real
-clonotypes. Neither reproduces immrep25's within-epitope homology, so its excess is not
-manufactured by generation degree, by clone frequency, or by the real thymic-selection
-process (AIRR random $\airrHomB$); it is specific to immrep25's epitope$\to$TCR
-assignments (i.e.\ publicity, \S\ref{sec:publicity}). The same holds on TCR$\alpha$
+sits at the floor---including the structured \textbf{AIRR non-random} control
+($\airrTHomB$), whose 20 epitopes are the top-50 expanded clonotypes of 20 real donor
+repertoires. Even this realistic construction does not reproduce immrep25's within-epitope
+homology: each donor's top clones are private expansions (no $\beta$ clonotype is shared
+between donors), so the ``epitopes'' carry no convergent structure. immrep25's excess is
+therefore specific to its epitope$\to$TCR assignments (i.e.\ publicity,
+\S\ref{sec:publicity}), not to abundance or expansion in real data
+(AIRR random $\airrHomB$, OLGA random $\olgaRHomB$). The same holds on TCR$\alpha$
 (immrep25 $\immHomA$). immrep25's CI excludes $1$ but lies one to three orders of
 magnitude below every quality cohort. As the substitution radius grows
 (Fig.~\ref{fig:dlines}) the verified cohorts stay high while immrep25 and all controls
@@ -57,12 +58,11 @@ is the S/N. immrep25's points hug its non-self line, whereas the verified cohort
 orders of magnitude above. Table~\ref{tab:epi} lists all 20 immrep25 epitopes: in
 total they contribute only $\immWithinB$ (TCR$\beta$) / $\immWithinA$ (TCR$\alpha$)
 within-epitope Hamming-$1$ neighbours --- versus $\olgaWithinB$ / $\olgaWithinA$ for
-the $P_{\text{gen}}$-matched OLGA control and tens of thousands for the VDJdb cohorts
+the OLGA random control and tens of thousands for the VDJdb cohorts
 --- and even that handful is concentrated in a few epitopes (e.g.\ YLFNADIWI) and is
-entirely public (\S\ref{sec:publicity}). Tellingly, the AIRR rank-ladder carries
-\emph{more} within-group $\alpha$-neighbours ($93$) than immrep25 ($53$) yet its S/N
-stays below $1$: those neighbours are public clones scattered across rank bins, so raw
-homology without epitope concentration does not lift the S/N.
+entirely public (\S\ref{sec:publicity}). By contrast the AIRR non-random donors
+contribute essentially no within-epitope neighbours ($\airrTwithinB$ TCR$\beta$), because
+each donor's expanded clones are private rather than epitope-convergent.
 
 \begin{figure}[h]\centering
 \input{analysis/fig_beeswarm.tex}
@@ -84,13 +84,12 @@ controls. Sorted by $\beta$ S/N.}
 edge-density of the homology graph (nodes${=}$CDR3, edges${=}$Hamming${\le}1$; all
 epitopes with $\ge 30$ records). Figure~\ref{fig:homgraph} renders it (graphviz
 \texttt{sfdp} layout): the verified cohorts form dense epitope-coloured cliques, while
-the controls (even where they carry edges, e.g.\ the public AIRR rank-ladder) show no
-epitope-coloured clustering---their few edges cross colours rather than forming cliques.
+immrep25 and all controls are near-edgeless point clouds with no epitope-coloured
+clustering.
 
 \begin{figure}[h]\centering
 \includegraphics[width=\linewidth]{../results/figures/fig_homology_graph_TRB.pdf}
 \caption{TCR$\beta$ homology graph per cohort (all epitopes $\ge 30$ records). Verified
-cohorts form dense epitope-coloured cliques; the controls show no epitope-coloured
-clustering (the AIRR rank-ladder has edges from public clones, but they cross colours).}
+cohorts form dense epitope-coloured cliques; immrep25 and all controls are near-edgeless.}
 \label{fig:homgraph}
 \end{figure}

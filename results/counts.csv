@@ -5,6 +5,5 @@ vdjdb_lq,VDJdb LQ,79774,104590,140905,1711
 tcrvdb_false,TCRvdb false,308,308,308,2
 immrep25_pos,immrep25 pos,1000,1000,1000,20
 airr_control,AIRR random,1000,1000,1000,20
-airr_top,AIRR rank-ladder,1000,1000,1000,20
-olga_matched,OLGA pgen-ladder,1000,1000,1000,20
+airr_top,AIRR non-random,1000,1000,1000,20
 olga_random,OLGA random,1000,1000,1000,20

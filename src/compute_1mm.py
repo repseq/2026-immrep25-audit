@@ -47,7 +47,7 @@ if __name__ == "__main__":
     from cohorts import build_cohorts
     import time
     coh = build_cohorts(include_olga=True)
-    cohorts = ["immrep25_pos", "olga_matched", "olga_random", "airr_control", "airr_top"]
+    cohorts = ["immrep25_pos", "olga_random", "airr_control", "airr_top"]
     nproc = int(sys.argv[1]) if len(sys.argv) > 1 else 8
     for name in cohorts:
         for chain in ("A", "B"):

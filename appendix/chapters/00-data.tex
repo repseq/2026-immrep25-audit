@@ -15,9 +15,8 @@ VDJdb HQ     & VDJdb human MHC-I, $\ge 2$ references per (TCR, epitope) & strong
 VDJdb LQ     & VDJdb human MHC-I, single reference & weakly supported \\
 TCRvdb false & TCRvdb, $p_{\text{adj}}\ge 10^{-5}$ & experimentally refuted \\
 immrep25 pos & immrep25 \texttt{label}=1 & \textbf{system under test} \\
-AIRR random & real repertoire (isalgo/airr\_control), random labels & real-data floor \\
-AIRR rank-ladder & top-1000 real clonotypes; epitope $=$ frequency-rank bin of 50 & structured real control \\
-OLGA pgen-ladder & 50 per epitope, $P_{\text{gen}}$-matched to that immrep epitope & structured null \\
+AIRR random & pooled real repertoire (isalgo/airr\_control), random labels & real-data floor \\
+AIRR non-random & 20 largest SRA donors; epitope $=$ a donor's top-50 clonotypes & structured real control \\
 OLGA random  & raw OLGA generation, random labels & noise floor \\
 \bottomrule
 \end{tabular}
@@ -41,16 +40,15 @@ $\pm$ 95\% CI for pairing---across epitopes. The signal therefore attaches to
 individual epitopes and the reported error bars are the epitope-to-epitope spread
 ($n$ = number of qualifying epitopes); no bootstrap resampling is used.
 
-\paragraph{Controls with realistic epitope structure.} Random synthetic labels give
-S/N${=}1$ by construction, so we also build controls whose \emph{epitope grouping is
-structured}, to check whether any generic property could manufacture within-epitope
-homology. \textbf{OLGA pgen-ladder}: for each of the 20 immrep25 epitopes we draw 50
-OLGA sequences whose per-chain $P_{\text{gen}}$ matches \emph{that} epitope's positives
-(so each control epitope inherits the real epitope's generation degree).
-\textbf{AIRR rank-ladder}: the top 1000 real clonotypes by clone frequency, cut into 20
-consecutive rank bins of 50 that serve as epitopes (so each ``epitope'' is a set of
-equally-public clones). Two random-label floors (OLGA random, AIRR random) are kept for
-reference.
+\paragraph{A structured real-data control.} Random synthetic labels give S/N${=}1$ by
+construction, so we add a control whose epitope grouping is \emph{real and structured}:
+the \textbf{AIRR non-random} cohort. From the isalgo/airr\_benchmark SRA collection we
+take the 20 largest samples that carry $\ge 50$ TRA and $\ge 50$ TRB clonotypes; each
+\emph{donor} contributes its top 50 TRA and top 50 TRB clonotypes (by read count) as one
+virtual epitope. This mimics how a real epitope-specific dataset is built (expanded
+clones per sample), but the ``epitopes'' are individual donors, not antigens. Two
+random-label floors (OLGA random and the pooled AIRR random) are kept for reference. The
+20 donors are listed in \texttt{results/airr\_donors.tsv}.
 
 \paragraph{Pipeline.}
 \begin{center}
@@ -59,8 +57,8 @@ reference.
   data/.style={box,fill=blue!6}, proc/.style={box,fill=orange!8}, result/.style={box,fill=green!8}]
 \node[data] (imm) {immrep25\\TCRvdb\\VDJdb};
 \node[proc,right=of imm] (coh) {normalize\\cohorts};
-\node[proc,above right=3mm and 9mm of coh] (airr) {AIRR\\rank-ladder};
-\node[proc,below right=3mm and 9mm of coh] (olga) {OLGA\\pgen-ladder};
+\node[proc,above right=3mm and 9mm of coh] (airr) {AIRR non-random\\(20 donors)};
+\node[proc,below right=3mm and 9mm of coh] (olga) {random floors\\(AIRR, OLGA)};
 \node[proc,right=32mm of coh] (hom) {homology\\S/N};
 \node[proc,below=8mm of hom] (pair) {pairing\\$z$};
 \node[result,right=10mm of hom] (fig) {S/N\\hierarchy};

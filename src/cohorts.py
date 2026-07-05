@@ -13,7 +13,7 @@ from load_data import (load_immrep, load_tcrvdb, load_vdjdb,
 _REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 HIERARCHY = ["tcrvdb_true", "vdjdb_hq", "vdjdb_lq", "tcrvdb_false",
-             "immrep25_pos", "airr_control", "airr_top", "olga_matched", "olga_random"]
+             "immrep25_pos", "airr_control", "airr_top", "olga_random"]
 
 # nice labels + a stable colour index for figures
 COHORT_META = {
@@ -23,8 +23,7 @@ COHORT_META = {
     "tcrvdb_false": {"label": "TCRvdb false", "expect": "noise"},
     "immrep25_pos": {"label": "immrep25 pos", "expect": "test"},
     "airr_control": {"label": "AIRR random",  "expect": "real"},
-    "airr_top":     {"label": "AIRR rank-ladder", "expect": "real"},
-    "olga_matched": {"label": "OLGA pgen-ladder", "expect": "noise"},
+    "airr_top":     {"label": "AIRR non-random", "expect": "real"},
     "olga_random":  {"label": "OLGA random",  "expect": "noise"},
 }
 
@@ -67,7 +66,7 @@ def build_cohorts(include_olga: bool = False, olga_paired: pd.DataFrame | None =
 
     # --- generated / real controls (results/<name>.tsv from build_olga.py, build_airr.py) ---
     if include_olga:
-        for name in ("airr_control", "airr_top", "olga_matched", "olga_random"):
+        for name in ("airr_control", "airr_top", "olga_random"):
             src = _load_olga(name)
             if src is None:
                 continue

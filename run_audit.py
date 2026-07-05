@@ -115,15 +115,15 @@ def run():
             fh.write("\\texttt{%s} & %d & %d & %d & %.2f \\\\\n" % (r.epitope, r.n, r.mB, r.mA, r.snB))
         fh.write("\\midrule\n")
         summary = [("\\textbf{immrep25 (geom.\\ mean)}", "immrep25_pos"),
-                   ("AIRR random", "airr_control"), ("AIRR rank-ladder", "airr_top"),
-                   ("OLGA pgen-ladder", "olga_matched")]
+                   ("AIRR random", "airr_control"), ("AIRR non-random", "airr_top"),
+                   ("OLGA random", "olga_random")]
         for label, cohort in summary:
             if cohort not in coh:
                 continue
             n, mb, ma, sn = _srow(cohort)
             fh.write("%s & %d & %d & %d & %.2f \\\\\n" % (label, n, mb, ma, sn))
         fh.write("\\bottomrule\n\\end{tabular}\n")
-    om = _srow("olga_matched")
+    om = _srow("olga_random")
     imm_within = (int(imm_tab.mB.sum()), int(imm_tab.mA.sum()), om[1], om[2])
 
     # ---------------- pairing (one-vs-many, excess bits) ----------------
@@ -205,13 +205,12 @@ def run():
         "immHomA": H("immrep25_pos", "A"), "immHomB": H("immrep25_pos", "B"),
         "hqHomB": H("vdjdb_hq", "B"), "trueHomB": H("tcrvdb_true", "B"), "lqHomB": H("vdjdb_lq", "B"),
         "falseHomB": H("tcrvdb_false", "B"),
-        "olgaMHomB": H("olga_matched", "B"), "olgaRHomB": H("olga_random", "B"),
-        "olgaMHomA": H("olga_matched", "A"), "olgaRHomA": H("olga_random", "A"),
+        "olgaRHomB": H("olga_random", "B"), "olgaRHomA": H("olga_random", "A"),
         "airrHomB": H("airr_control", "B"), "airrHomA": H("airr_control", "A"),
         "airrTHomB": H("airr_top", "B"), "airrTHomA": H("airr_top", "A"),
         "immGene": P("immrep25_pos", "gene_mean"), "immMi": P("immrep25_pos", "mi_mean"),
         "hqGene": P("vdjdb_hq", "gene_mean"), "trueMi": P("tcrvdb_true", "mi_mean"),
-        "olgaMGene": P("olga_matched", "gene_mean"), "olgaMMi": P("olga_matched", "mi_mean"),
+        "olgaRGene": P("olga_random", "gene_mean"), "olgaRMi": P("olga_random", "mi_mean"),
         "pubAny": 100 * float(pub_summary.frac_public_any.iloc[0]),
         "pubA": 100 * float(pub_summary.frac_public_a.iloc[0]),
         "pubB": 100 * float(pub_summary.frac_public_b.iloc[0]),
@@ -219,7 +218,8 @@ def run():
         "npHomB": float(pub[(pub.subset == "non_public") & (pub.chain == "B")].sn.iloc[0]),
     }
     ints = {"immWithinB": imm_within[0], "immWithinA": imm_within[1],
-            "olgaWithinB": imm_within[2], "olgaWithinA": imm_within[3]}
+            "olgaWithinB": imm_within[2], "olgaWithinA": imm_within[3],
+            "airrTwithinB": int(per_ep[("airr_top", "B")].m1.sum()) if ("airr_top", "B") in per_ep else 0}
     def fmt(v):
         if not np.isfinite(v):
             return "n/a"

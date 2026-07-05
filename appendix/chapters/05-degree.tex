@@ -7,33 +7,23 @@ generation probability of all CDR3s within Hamming distance $1$, computed exactl
 OLGA's wildcard identity (\texttt{compute\_hamming\_dist\_1\_pgen}; terminal anchor
 positions skipped). Figure~\ref{fig:pgen1mm} shows the per-chain distributions.
 
-\paragraph{The pgen-matched control also matches degree.} immrep25 and its
-per-epitope $P_{\text{gen}}$-matched OLGA control (pgen-ladder) have essentially identical
-neighbourhood-pgen distributions (median $\Delta\log_{10}\approx 0.04$ on TCR$\alpha$,
-$0.07$ on TCR$\beta$; orange and red curves overlap). Matching the point pgen therefore
-already matches the generation degree, so the control is valid for homology matchability
-and immrep25's residual homology is \emph{not} a neighbourhood-density artefact---consistent
-with its being publicity (\S\ref{sec:publicity}), which is removed by chain, not by degree.
-
-\paragraph{Degree spans a decade, yet homology S/N stays at the floor.} Absolute degree
-differs strongly with how the real repertoire is sampled, and both extremes are shown.
-Sampled uniformly over \emph{unique} clonotypes (AIRR random), the repertoire sits at
-\emph{lower} neighbourhood pgen than pgen-weighted OLGA generation---its diversity is
-dominated by low-pgen singletons. Sampled as the top clonotypes by \emph{clone
-frequency} (AIRR rank-ladder), the public, expanded clones give the \emph{highest}
-neighbourhood pgen of any cohort (median $\sim\!0.9$ dex above OLGA on TCR$\alpha$),
-confirming that abundant real TCRs are indeed high-degree. Crucially, \emph{both} AIRR
-variants sit at homology S/N ${\approx}1$ (Fig.~\ref{fig:hom}): the S/N is normalised
-against a random re-partition of each cohort, so it measures epitope \emph{specificity},
-not absolute degree. Generation degree and epitope-specific convergence are therefore
-distinct axes---immrep25 is elevated on neither beyond publicity.
+\paragraph{Degree varies widely, yet homology S/N stays at the floor.} The cohorts span
+a broad range of generation degree. The pooled AIRR random repertoire, sampled over
+\emph{unique} clonotypes, sits lowest (its diversity is dominated by low-pgen singletons);
+raw OLGA generation is intermediate; and immrep25 together with the AIRR non-random donor
+clones sit highest---immrep25 positives are public-leaning, high-$P_{\text{gen}}$
+sequences (Fig.~\ref{fig:pgen}), and a donor's most expanded clonotypes are likewise
+abundant and public. Despite this spread, \emph{every} control sits at homology
+S/N${\approx}1$ (Fig.~\ref{fig:hom}): the S/N is normalised against a random re-partition
+of each cohort, so it measures epitope \emph{specificity}, not absolute degree.
+Generation degree and epitope-specific convergence are distinct axes---immrep25 is
+elevated on neither beyond publicity.
 
 \begin{figure}[h]\centering
 \input{analysis/fig_pgen1mm.tex}
-\caption{1-mm neighbourhood $P_{\text{gen}}$ (kernel density) per chain. immrep25
-overlaps its pgen-matched OLGA control (degree is controlled). The real AIRR repertoire
-spans a decade of degree by sampling---lowest for unique clonotypes, highest for the
-abundant top-frequency clones---yet both sit at homology S/N${\approx}1$
-(Fig.~\ref{fig:hom}).}
+\caption{1-mm neighbourhood $P_{\text{gen}}$ (kernel density) per chain. immrep25 and the
+abundant AIRR non-random donor clones sit at high degree, the pooled AIRR random
+repertoire at low degree, OLGA random in between---yet all controls sit at homology
+S/N${\approx}1$ (Fig.~\ref{fig:hom}).}
 \label{fig:pgen1mm}
 \end{figure}

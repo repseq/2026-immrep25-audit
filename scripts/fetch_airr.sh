@@ -12,4 +12,14 @@ for chain in tra trb; do
   echo "Downloading human.${chain}.aa ..."
   curl -L --fail -o "$out" "$BASE/human.${chain}.aa.vdjtools.tsv.gz"
 done
-echo "Done. Build the cohort with: python src/build_airr.py"
+
+# SRA per-donor samples (isalgo/airr_benchmark) for the AIRR non-random control
+BENCH="$REPO/cache/airr_bench"; mkdir -p "$BENCH"
+BB="https://huggingface.co/datasets/isalgo/airr_benchmark/resolve/main/sra"
+[ -f "$BENCH/meta.tsv" ] || curl -L --fail -o "$BENCH/meta.tsv" "$BB/meta.tsv"
+if [ ! -d "$BENCH/samples" ]; then
+  echo "Downloading + unpacking SRA samples ..."
+  curl -L --fail -o "$BENCH/samples.tar.gz" "$BB/samples.tar.gz"
+  mkdir -p "$BENCH/samples" && tar xzf "$BENCH/samples.tar.gz" -C "$BENCH/samples"
+fi
+echo "Done. Build the cohorts with: python src/build_airr.py"
