@@ -104,6 +104,7 @@ python tests/test_homology.py      # unit tests
 - **TCRvdb / MATCHMAKERS** — **private, never committed** (results only). Cite: Messemaker et al., bioRxiv 2025, [10.1101/2025.04.28.651095](https://doi.org/10.1101/2025.04.28.651095).
 - **Chain pairing** background: Shcherbinin, Belousov & Shugay, *PLoS Comput Biol* 2020, [10.1371/journal.pcbi.1007714](https://doi.org/10.1371/journal.pcbi.1007714).
 - **OLGA** generation model: Murugan et al., *PNAS* 2012, [10.1073/pnas.1212755109](https://doi.org/10.1073/pnas.1212755109).
+- **MLR expanded** (proliferating β clones): Emerson, Mathew, Konieczna, Robins & Leventhal (Adaptive immunoSEQ), *PLoS ONE* 2014, [10.1371/journal.pone.0111943](https://doi.org/10.1371/journal.pone.0111943).
 
 ## Method notes
 
