@@ -1,0 +1,56 @@
+# Data policy: dump/ is entirely LOCAL. Only dump/.gitkeep is tracked; all raw
+# inputs, fetch scripts (dump/scripts/) and downloaded datasets stay out of git.
+# Derived statistics live in results/ and appendix/ and ARE committed.
+dump/*
+!dump/.gitkeep
+
+# Claude local settings / plans
+.claude/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+
+# Heavy intermediates: only summary .dat + figures + the small reproducibility caches
+# (cache/esm/*.npy, tracked via git-lfs) are committed. cache/struct, cache/mhc_cache, etc. stay out.
+cache/*
+!cache/esm/
+# ESM embeddings of PRIVATE TCRvdb sequences -> never commit
+cache/esm/tcrvdb_*.npy
+# union-of-all-cohorts embeddings (src/esm_pca.py): ~200 MB, and they pool the private TCRvdb
+# sequences. Only the fitted projection (pca_{A,B}.npz, a few kB) is committed.
+cache/esm/allseq_*.npy
+# marimo session/run caches
+notebooks/__marimo__/
+*.pool.tsv
+*.pgen.tsv
+results/*.parquet
+results/cache/
+results/*.log
+
+# LaTeX build artifacts
+appendix/*.aux
+appendix/*.log
+appendix/*.out
+appendix/*.toc
+appendix/*.fls
+appendix/*.fdb_latexmk
+appendix/*.synctex.gz
+appendix/*.bbl
+appendix/*.blg
+appendix/**/*.aux
+
+# OS
+.DS_Store
+manuscript/*.aux
+manuscript/*.log
+manuscript/*.out
+manuscript/*.fls
+manuscript/*.fdb_latexmk
+manuscript/*.synctex.gz
+manuscript/*.bbl
+manuscript/*.blg
+manuscript/build*.log
+manuscript/figures/.build/

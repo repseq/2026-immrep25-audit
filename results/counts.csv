@@ -1,0 +1,11 @@
+cohort,label,n_paired,n_chainA,n_chainB,n_epitopes
+tcrvdb_true,TCRvdb pos,305,222,261,2
+vdjdb_hq,VDJdb HQ,20751,34702,54021,323
+immrep22_true,IMMREP22 pos,618,583,575,17
+vdjdb_lq,VDJdb LQ,5862,7285,15575,1400
+tcrvdb_false,TCRvdb neg,307,294,287,2
+immrep25_pos,IMMREP25 pos,1000,991,993,20
+pairseq_mock,pairSEQ mock,1000,1000,1000,20
+mlr_prolif,MLR expanded,0,0,2400,12
+airr_control,AIRR rand,1000,1000,1000,20
+olga_random,OLGA rand,1000,1000,1000,20

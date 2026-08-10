@@ -1,0 +1,5 @@
+# Reproducibility caches stored via git-lfs so a fresh clone can rerun the GPU-free /
+# aldan3-free analyses (degenerate.py, esm_cluster.py, esm_signal.py, structure_signal.py)
+# without re-embedding (needs a GPU) or re-folding (needs aldan3 + tcren).
+cache/esm/*.npy          filter=lfs diff=lfs merge=lfs -text
+results/struct_desc_*.tsv filter=lfs diff=lfs merge=lfs -text

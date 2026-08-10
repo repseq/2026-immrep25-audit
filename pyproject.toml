@@ -1,0 +1,37 @@
+[project]
+name = "immrep25-audit"
+version = "0.1.0"
+description = "Sequence/structure/learning audit of the IMMREP25 unseen-peptide TCR-pMHC benchmark"
+requires-python = ">=3.11"
+# Core analysis deps: reproduce every result from the cached embeddings (cache/esm/*.npy)
+# and cached structural descriptors (results/struct_desc_*.tsv) -- no GPU/torch needed.
+dependencies = [
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "scipy>=1.11",
+    "scikit-learn>=1.4",
+    "python-igraph>=0.10",
+    "leidenalg>=0.10",
+    "matplotlib>=3.8",
+    "networkx>=3.2",
+    "pycirclize>=1.10",
+    "marimo>=0.9",
+]
+
+[project.optional-dependencies]
+# Re-embedding cohorts from scratch (regenerates cache/esm/*.npy). Heavy; not needed to
+# reproduce results from the shipped cache.
+embed = ["torch>=2.2", "transformers>=4.40"]
+# Regenerating the OLGA synthetic control pool.
+gen = ["olga>=1.3"]
+
+[tool.uv]
+# Keep the lock resolvable without the heavy optional groups by default.
+default-groups = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
