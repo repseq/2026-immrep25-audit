@@ -165,6 +165,10 @@ def run():
     obs_mean, sigma = sigma_per_peptide(mu)
     crit = Z * sigma                        # smallest resolvable difference between two methods
     f_implied = 2.0 * (1.0 - AUC_BEST)      # f at which the best entry would BE the ceiling
+    # The same inverse reading for the second channel: with perfectly clean positives, how much
+    # cross-pool contamination is compatible with the reported best score before the ceiling
+    # falls below it? Solved on the partial-AUC ceiling, which is the statistic reported.
+    g_implied = float(brentq(lambda g: auc_ceiling(0.0, g) - AUC_BEST, 1e-9, 0.999))
     f_lo, f_hi = F_RANGE
     ceil_hi, ceil_lo = auc_ceiling(f_lo), auc_ceiling(f_hi)   # ceiling at the low/high end of f
     delta_crit = crit / (1.0 - f_hi)        # clean-label difference needed at the top of the range
@@ -215,12 +219,17 @@ def run():
         "veCeilGOnly": "%.2f" % auc_ceiling(0.0, g_hi),
         "veCeilGOnlyFull": "%.2f" % auc_ceiling_full(0.0, g_hi),
         "veCeilFullFgHi": "%.2f" % auc_ceiling_full(f_hi, g_hi),
+        "veGimplied": "%.3f" % g_implied,
+        "veGimpliedPct": "%.1f" % (100 * g_implied),
     }
     with open(os.path.join(ADAT, "valideff_macros.tex"), "w") as fh:
         for k, v in macros.items():
             fh.write("\\newcommand{\\%s}{%s}\n" % (k, v))
 
-    print("ceiling self-check: max |simulated - (1-f/2)| = %.4f" % err)
+    print("ceiling self-check (both the partial-AUC geometry and 1-f/2-g/2, over the (f,g) "
+          "grid): max |simulated - analytic| = %.4f" % err)
+    print("cross-pool contamination alone: the partial-AUC ceiling falls to the reported %.2f "
+          "at g = %.1f%% (with perfectly clean positives)" % (AUC_BEST, 100 * g_implied))
     print("per-peptide macro-AUC0.1 at %d vs %d: mean %.3f, sd %.4f  -> smallest resolvable "
           "difference z*sigma = %.3f" % (N_POS, N_NEG, obs_mean, sigma, crit))
     print("observed best %.2f equals the ceiling at f = %.2f" % (AUC_BEST, f_implied))
