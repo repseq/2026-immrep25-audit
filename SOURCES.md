@@ -29,6 +29,12 @@ descriptors — cannot be regenerated without aldan3 + tcren).
 | MLR proliferating repertoires | isalgo/airr\_benchmark `alice/mlr` | TSV | `bash dump/scripts/fetch_mlr.sh` (cache, not committed) | experimental — [Emerson 2014](https://doi.org/10.1371/journal.pone.0111943) immunoSEQ MLR |
 | pairSEQ wells (subjects X, Y) | aldan3 `/projects/biomarkers/pairseq/subject{X,Y}/cdna_data/TCR{A,B}.well<NN>.results.tsv.gz` (96 wells × 2 chains × 2 subjects) | TSV.gz | `bash dump/scripts/fetch_pairseq.sh` → `dump/pairseq/` (not committed) | experimental — Adaptive immunoSEQ cDNA well exports; [Howie 2015](https://doi.org/10.1126/scitranslmed.aac5624) pairSEQ. **Native Adaptive gene naming** (`TCRBV07-09`, not `TRBV7-9`); `copy` is the template count (`count` is empty in this export); subjectX well25 is empty at source |
 
+## Reference property tables (experimental / published)
+
+| table | origin | format | fetch / regenerate | provenance |
+|---|---|---|---|---|
+| AAindex1 amino-acid property indices | [genome.jp AAindex](https://www.genome.jp/ftp/db/community/aaindex/aaindex1) (GenomeNet, Kyoto) | flat text | `curl -fsSL -o dump/aaindex/aaindex1 https://www.genome.jp/ftp/db/community/aaindex/aaindex1` (10,575 lines; not committed) | published property indices, used for the epitope-independent receptor scores of the appeal round. **NB it carries only ONE Kidera accession** — `KIDA850101`, "Hydrophobicity-related index (Kidera et al., 1985)" — not the ten orthogonal factors of that paper, so it is insufficient on its own for a Kidera-factor score; `dump/aaindex/kidera.csv` holds what was parsed from it. Values are normalised (mean 0, sd 1 over the 20 residues) as distributed |
+
 ## Derived / computed artifacts
 
 | artifact | produced by | notes |
