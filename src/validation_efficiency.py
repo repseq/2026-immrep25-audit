@@ -173,6 +173,15 @@ def run():
     ceil_hi, ceil_lo = auc_ceiling(f_lo), auc_ceiling(f_hi)   # ceiling at the low/high end of f
     delta_crit = crit / (1.0 - f_hi)        # clean-label difference needed at the top of the range
     delta_obs_max = AUC_BEST - 0.5          # whole observed range of the field, above chance
+
+    # alpha*: the false-positive fraction beyond which the best entry is no longer RESOLVABLY
+    # below the ceiling. The ceiling falls as 1 - f/2 while the resolution floor inflates as
+    # crit/(1-f), so the two cross exactly once. Above the crossing, "the field underperforms
+    # its benchmark" is not a statement this geometry can support, whatever the true f is.
+    f_at_ceil = float(brentq(lambda f: auc_ceiling(f) - AUC_BEST - crit / (1.0 - f),
+                             0.0, f_implied - 1e-9))
+    # and where the anchored end of the range actually sits, in units of that floor
+    crit_ratio_lo = (auc_ceiling(f_hi) - AUC_BEST) / (crit / (1.0 - f_hi))
     err = _selfcheck()
     assert err < 5e-3, "ceiling formula failed its self-check: max error %.4f" % err
 
@@ -221,6 +230,10 @@ def run():
         "veCeilFullFgHi": "%.2f" % auc_ceiling_full(f_hi, g_hi),
         "veGimplied": "%.3f" % g_implied,
         "veGimpliedPct": "%.1f" % (100 * g_implied),
+        # f beyond which the best submission is within one resolvable difference of the
+        # ceiling, i.e. statistically AT the label ceiling; and the ratio at f = F_RANGE[1]
+        "veFatCeil": "%.3f" % f_at_ceil,
+        "veCritRatioLo": "%.2f" % crit_ratio_lo,
     }
     with open(os.path.join(ADAT, "valideff_macros.tex"), "w") as fh:
         for k, v in macros.items():
@@ -233,6 +246,9 @@ def run():
     print("per-peptide macro-AUC0.1 at %d vs %d: mean %.3f, sd %.4f  -> smallest resolvable "
           "difference z*sigma = %.3f" % (N_POS, N_NEG, obs_mean, sigma, crit))
     print("observed best %.2f equals the ceiling at f = %.2f" % (AUC_BEST, f_implied))
+    print("for f >= %.3f the best entry is within one resolvable difference (%.3f/(1-f)) of the "
+          "ceiling -- statistically at it; at f = %.2f it sits %.2f such differences below"
+          % (f_at_ceil, crit, f_hi, crit_ratio_lo))
     print("at f = %.0f%%-%.0f%%, a PERFECT predictor would score %.2f-%.2f; the field's best is %.2f"
           % (100 * f_lo, 100 * f_hi, ceil_hi, ceil_lo, AUC_BEST))
     print("at f = %.0f%% a clean-label difference must exceed %.2f to be resolvable; the whole field "
