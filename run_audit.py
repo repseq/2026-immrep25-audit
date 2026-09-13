@@ -242,8 +242,17 @@ def run():
             # raw within-epitope neighbour-pair count: for the novel subset this is the honest
             # statistic, since with 0 pairs everywhere the pseudocount pins S/N at exactly 1
             # and its CI collapses to zero width.
+            # Exposures are emitted alongside the counts: with 0 within-epitope pairs the
+            # pseudocount pins S/N at exactly 1 and its CI to zero width, so the ratio is not
+            # an estimate and no finite bound follows from it. The honest statistic is then an
+            # exact one-sided Poisson bound on the neighbour-pair RATE, which needs P_self.
+            from audit_stats import poisson_rate_upper
+            m1, p_self, p_non = float(pe.m1.sum()), float(pe.P_self.sum()), float(pe.P_non.sum())
             prows.append({"subset": label, "chain": chain, "n": len(sub),
-                          "n_ep": int(len(pe)), "within_pairs": int(pe.m1.sum()),
+                          "n_ep": int(len(pe)), "within_pairs": int(m1),
+                          "P_self": p_self, "P_non": p_non,
+                          "rate_self": (m1 / p_self) if p_self else float("nan"),
+                          "rate_upper97": poisson_rate_upper(int(m1), p_self),
                           "sn": s["sn"], "lo": s["lo"], "hi": s["hi"]})
     pub = pd.DataFrame(prows)
     # Same publicity contrast on the INTER-CHAIN probe: if IMMREP25's residual V/J coupling is

@@ -250,6 +250,17 @@ def run():
                  macros.get("aripctIi" + chain), macros.get("aripctImm" + chain),
                  macros["aripctP" + chain]))
 
+    # The bootstrap arrays are the only inputs from which an equivalence bound (largest effect
+    # ruled out) can be computed, and this stage takes ~25 min because the bootstrap refits
+    # Leiden N_BOOT times per cohort and chain. Persist them before dropping, so a bound can be
+    # recomputed in seconds instead of re-running the stage.
+    np.savez_compressed(
+        os.path.join(CACHE, "boot_arrays.npz"),
+        **{"%s|%s|%s" % (r.cohort, r.chain, k): np.asarray(getattr(r, k), dtype=float)
+           for r in df.itertuples() for k in ("_ariboot", "_amiboot", "_aripctboot")})
+    print("  [wrote %s: %d bootstrap arrays, B=%d]"
+          % (os.path.join(CACHE, "boot_arrays.npz"), 3 * len(df), N_BOOT))
+
     out = df.drop(columns=["_ariboot", "_amiboot", "_aripctboot"])
     out.to_csv(os.path.join(RESULTS, "esm_cluster.csv"), index=False)
     idx = {n: i for i, n in enumerate(HIERARCHY)}
