@@ -1,0 +1,9 @@
+module,seed,resamples
+epitope_free,0,N_PERM=2000
+retrieval_baseline,0,n/a
+publicity_controls,0,N_RANDOM=1000; N_MATCHED=200
+cohort_stats,0,N_DRAWS=200
+sensitivity,1,n/a
+pairwise,0,N_FOLDS=5
+utility,n/a,n/a
+validation_efficiency,0,N_SIM=4000

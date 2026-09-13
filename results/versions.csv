@@ -1,0 +1,12 @@
+component,version
+python,3.13.14
+platform,Darwin arm64
+numpy,2.5.1
+pandas,3.0.5
+scipy,1.18.0
+sklearn,1.9.0
+igraph,1.0.0
+leidenalg,0.12.0
+networkx,3.6.1
+Bio,1.88
+analysis repo commit,50c9ec0 (uncommitted changes present)
