@@ -7,3 +7,4 @@ sensitivity,1,n/a
 pairwise,0,N_FOLDS=5
 utility,n/a,n/a
 validation_efficiency,0,N_SIM=4000
+transfer_germline,0,n/a

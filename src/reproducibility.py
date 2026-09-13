@@ -38,10 +38,12 @@ ADAT = os.path.join(REPO, "appendix", "analysis")
 
 from cohorts import build_cohorts, COHORT_META          # noqa: E402
 
-PACKAGES = ("numpy", "pandas", "scipy", "sklearn", "igraph", "leidenalg", "networkx", "Bio")
+PACKAGES = ("numpy", "pandas", "polars", "scipy", "sklearn", "igraph", "leidenalg",
+            "networkx", "Bio")
 # modules whose seed constant governs a reported number
 SEEDED = ("epitope_free", "retrieval_baseline", "publicity_controls", "cohort_stats",
-          "sensitivity", "pairwise", "utility", "validation_efficiency")
+          "sensitivity", "pairwise", "utility", "validation_efficiency",
+          "transfer_germline")
 
 
 def overlap_matrix(coh, chain: str) -> pd.DataFrame:

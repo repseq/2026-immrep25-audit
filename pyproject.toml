@@ -16,6 +16,7 @@ dependencies = [
     "networkx>=3.2",
     "pycirclize>=1.10",
     "marimo>=0.9",
+    "polars>=1.44.2",
 ]
 
 [project.optional-dependencies]

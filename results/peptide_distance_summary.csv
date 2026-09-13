@@ -1,0 +1,10 @@
+kind,hla,metric,n_pairs,min,median,max
+cross,,hamming,100,5,8.0,9
+cross,,lcsubstr,100,1,1.0,3
+cross,,lev,100,5,8.0,9
+within,A*02:01,hamming,45,6,8.0,9
+within,A*02:01,lcsubstr,45,1,1.0,3
+within,A*02:01,lev,45,6,8.0,9
+within,B*40:01,hamming,45,4,7.0,7
+within,B*40:01,lcsubstr,45,1,2.0,4
+within,B*40:01,lev,45,4,7.0,7
