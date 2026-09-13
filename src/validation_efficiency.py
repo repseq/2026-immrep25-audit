@@ -49,15 +49,68 @@ MAX_FPR = 0.10        # the benchmark scores the low-false-positive region
 N_POS = 50            # positive TCRs per IMMREP25 peptide (Richardson 2026 design)
 N_NEG = 450           # same-MHC negatives per peptide: the other nine peptides' 50 receptors each
 F_RANGE = (0.10, 0.50)  # plausible false-positive range for a pool-deconvolution assay
+G_RANGE = (0.00, 0.25)  # cross-pool contamination: labelled negatives that are in fact binders.
+                        # Forced above 0 by the within-MHC negative design, and likewise never
+                        # asserted for IMMREP25 -- reported over a continuum, as f is.
 Z = 1.96
 N_SIM = 4000
 SEED = 0
 
 
-def auc_ceiling(f: float) -> float:
-    """Highest McClish-standardised AUC (any max_fpr) reachable when a fraction f of the labelled
-    positives are drawn from the negative distribution. Also the full-AUC ceiling."""
-    return 1.0 - f / 2.0
+def auc_ceiling_full(f: float, g: float = 0.0) -> float:
+    """Ceiling on the FULL AUC when a fraction f of the labelled positives are not binders and
+    a fraction g of the labelled negatives are.
+
+    For the ideal score s(r) = 1{r binds the scored peptide}, a positive/negative pair is
+    ordered correctly with probability (1-f)(1-g) and tied with probability
+    (1-f)g + f(1-g), so
+
+        AUC_max(f, g) = (1-f)(1-g) + [(1-f)g + f(1-g)]/2 = 1 - f/2 - g/2.
+
+    Symmetric and first-order in both, with the standing result as the g = 0 case.
+    """
+    return 1.0 - f / 2.0 - g / 2.0
+
+
+def auc_ceiling(f: float, g: float = 0.0, max_fpr: float = MAX_FPR) -> float:
+    """Ceiling on the McClish-standardised PARTIAL AUC over FPR<=max_fpr.
+
+    This is NOT 1 - f/2 - g/2, and the difference is the whole point. Under the ideal score
+    the mislabelled negatives -- genuine binders sitting in the negative class -- score at the
+    TOP of the ranking, so the ROC is two straight segments,
+
+        (0,0) -> (g, 1-f) -> (1,1),
+
+    the first being the tied block of true binders (both the correctly labelled positives and
+    the g of the negatives), the second the tied block of everything that does not bind. When
+    g exceeds max_fpr the entire low-false-positive region the metric integrates over lies
+    inside that first segment, and the attainable partial area collapses far below the
+    full-AUC ceiling. At f=0, g=0.25 and max_fpr=0.1 the standardised partial ceiling is
+    0.579 against a full-AUC ceiling of 0.875.
+
+    So cross-pool contamination costs the reported metric much more than it costs the full
+    AUC -- and IMMREP25's negatives are, by construction, the positives of the other nine
+    peptides of the same MHC, so any receptor cross-reactive within an allele lands there.
+
+    At g = 0 this reduces exactly to 1 - f/2, which is why the standing result is recovered:
+    the raw area is (1-f)r + f r^2/2 and standardisation divides out r(1 - r/2).
+
+    Correlated contamination is a separate channel and does not enter here. Clustering by
+    donor, pool or well leaves both marginal fractions unchanged, so it does not move either
+    ceiling; what it does is inflate the variance of a per-peptide score, raising the
+    resolution floor z*sigma/(1-f). Ceiling and resolution must not be conflated.
+    """
+    r, p = max_fpr, 1.0 - f
+    if g <= 0.0:
+        area = p * r + (1.0 - p) * r * r / 2.0
+    elif r <= g:
+        area = (p / (2.0 * g)) * r * r                      # still on the first segment
+    else:
+        area = (p * g / 2.0                                  # all of the first segment
+                + p * (r - g)                                # plus the second segment's base
+                + ((1.0 - p) / (1.0 - g)) * (r - g) ** 2 / 2.0)
+    lo, hi = 0.5 * r * r, r
+    return 0.5 * (1.0 + (area - lo) / (hi - lo))
 
 
 def _binormal_mu(target: float, max_fpr: float = MAX_FPR) -> float:
@@ -81,18 +134,29 @@ def sigma_per_peptide(mu: float, n_sim: int = N_SIM, seed: int = SEED) -> tuple[
 
 
 def _selfcheck(seed: int = 1, n_sim: int = 1500) -> float:
-    """Max |simulated - analytic| ceiling over f; a perfectly separable signal must match 1 - f/2."""
+    """Max |simulated - analytic| ceiling over the (f, g) grid.
+
+    A perfectly separable signal must match 1 - f/2 - g/2: mislabelled positives are drawn
+    from the negative distribution, and mislabelled negatives (cross-pool binders) from the
+    positive one.
+    """
     rng = np.random.default_rng(seed)
     y = np.r_[np.ones(N_POS), np.zeros(N_NEG)]
     err = 0.0
     for f in (0.0, 0.1, 0.3, 0.5, 0.8):
-        v = np.empty(n_sim)
-        for i in range(n_sim):
-            k = rng.binomial(N_POS, f)
-            s = np.r_[rng.normal(50.0, 1.0, N_POS - k), rng.normal(0.0, 1.0, k),
-                      rng.normal(0.0, 1.0, N_NEG)]
-            v[i] = roc_auc_score(y, s, max_fpr=MAX_FPR)
-        err = max(err, abs(v.mean() - auc_ceiling(f)))
+        for g in (0.0, 0.1, 0.25):
+            v = np.empty(n_sim)
+            w = np.empty(n_sim)
+            for i in range(n_sim):
+                k = rng.binomial(N_POS, f)          # positives that are not binders
+                m = rng.binomial(N_NEG, g)          # negatives that are binders
+                s = np.r_[rng.normal(50.0, 1.0, N_POS - k), rng.normal(0.0, 1.0, k),
+                          rng.normal(50.0, 1.0, m), rng.normal(0.0, 1.0, N_NEG - m)]
+                v[i] = roc_auc_score(y, s, max_fpr=MAX_FPR)
+                w[i] = roc_auc_score(y, s)
+            # the partial ceiling is the two-segment geometry; the full AUC is 1 - f/2 - g/2
+            err = max(err, abs(v.mean() - auc_ceiling(f, g)),
+                      abs(w.mean() - auc_ceiling_full(f, g)))
     return err
 
 
@@ -115,6 +179,15 @@ def run():
         for f in fs:
             fh.write("%.3f %.4f %.4f\n" % (f, auc_ceiling(f), crit / max(1.0 - f, 1e-6)))
 
+    # The structured-noise arm goes to its own file rather than a new column: valideff.dat's
+    # schema is read by the existing gnuplot panel, and widening it would break that figure.
+    g_lo, g_hi = G_RANGE
+    with open(os.path.join(ADAT, "valideff_g.dat"), "w") as fh:
+        fh.write("# f ceiling_g0 ceiling_g_mid ceiling_g_hi\n")
+        for f in fs:
+            fh.write("%.3f %.4f %.4f %.4f\n"
+                     % (f, auc_ceiling(f, 0.0), auc_ceiling(f, g_hi / 2), auc_ceiling(f, g_hi)))
+
     macros = {
         "veAucBest": "%.2f" % AUC_BEST,
         "veNsub": "%d" % N_SUB,
@@ -131,6 +204,17 @@ def run():
         "veCeilHi": "%.2f" % ceil_hi,          # ceiling at f = F_RANGE[0]
         "veDeltaCrit": "%.2f" % delta_crit,
         "veDeltaObsMax": "%.2f" % delta_obs_max,
+        # Structured noise: the benchmark's within-MHC negatives put genuine binders in the
+        # negative class. On the FULL AUC that costs a symmetric g/2; on the partial AUC the
+        # metric actually reports it costs far more, because those binders rank at the top and
+        # so occupy the low-false-positive region the metric integrates over.
+        "veGHi": "%d" % round(100 * g_hi),
+        "veCeilFgHi": "%.2f" % auc_ceiling(f_hi, g_hi),
+        "veCeilFgLo": "%.2f" % auc_ceiling(f_lo, g_hi),
+        "veCeilGDrop": "%.2f" % (auc_ceiling(f_hi, 0.0) - auc_ceiling(f_hi, g_hi)),
+        "veCeilGOnly": "%.2f" % auc_ceiling(0.0, g_hi),
+        "veCeilGOnlyFull": "%.2f" % auc_ceiling_full(0.0, g_hi),
+        "veCeilFullFgHi": "%.2f" % auc_ceiling_full(f_hi, g_hi),
     }
     with open(os.path.join(ADAT, "valideff_macros.tex"), "w") as fh:
         for k, v in macros.items():
