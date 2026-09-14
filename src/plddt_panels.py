@@ -42,6 +42,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HF = os.path.expanduser("~/hf/tcren_structures")
 RESULTS = os.path.join(REPO, "results")
 FIGDIR = os.path.join(RESULTS, "figures")
+ADAT = os.path.join(REPO, "appendix", "analysis")
 
 BLUE, RED, GREY = "#2c7fb8", "#d7301f", "#8a8a8a"      # as iptm_compare.py
 TEAL = "#41b6c4"
@@ -152,6 +153,12 @@ def main():
     print("  -> the within-minus-pooled gap is %.4f: that much of the apparent performance is "
           "per-epitope recentring, not a usable operating point"
           % (float(np.mean(within)) - pooled))
+    # persist the per-cohort values: the range across cohorts is the direct evidence that a
+    # per-epitope score cannot rank methods, and it was previously stdout-only
+    (sel.select("source", "epitope", "n_pos", "n_neg")
+        .with_columns(within_auc=pl.Series(within))
+        .sort("within_auc")
+        .write_csv(os.path.join(RESULTS, "plddt_transfer.csv")))
     # where do IMMREP25's binders sit on the same scale?
     print("\nbinder median pLDDT by set (a transferable score would put these together):")
     for src in ["IMMREP25"] + sorted(set(ref["source"].to_list())):
@@ -163,6 +170,31 @@ def main():
     print("non-binder median across all sets: %.2f" % float(np.median(nb)))
     print("IMMREP25 true binders scoring BELOW that non-binder median: %.1f%%"
           % (100 * float((imm["plddt"].to_numpy() < np.median(nb)).mean())))
+
+    # ---- macros. These are FULL AUCs, unlike every other AUC in this repo, because a
+    # transferable operating point is a question about the whole ROC and not about the
+    # low-false-positive region the benchmark integrates over. Labelled as such in the text.
+    macros = {
+        "pldNcohort": "%d" % len(within),
+        "pldMinClass": "%d" % MIN_CLASS,
+        "pldWithin": "%.4f" % float(np.mean(within)),
+        "pldWithinSd": "%.4f" % float(np.std(within, ddof=1)),
+        "pldWithinLo": "%.4f" % float(min(within)),
+        "pldWithinHi": "%.4f" % float(max(within)),
+        "pldPooled": "%.4f" % pooled,
+        "pldPooledN": "%d" % allc.height,
+        "pldGap": "%.4f" % (float(np.mean(within)) - pooled),
+        "pldImmMedian": "%.2f" % float(imm["plddt"].median()),
+        "pldNegMedian": "%.2f" % float(np.median(nb)),
+        "pldImmBelowNeg": "%.1f" % (100 * float((imm["plddt"].to_numpy() < np.median(nb)).mean())),
+        "pldNimm": "%d" % imm.height,
+        "pldNpep": "%d" % imm["epitope"].n_unique(),
+    }
+    with open(os.path.join(ADAT, "plddt_macros.tex"), "w") as fh:
+        for k, v in macros.items():
+            fh.write("\\newcommand{\\%s}{%s}\n" % (k, v))
+    print("wrote results/plddt_transfer.csv")
+    print("wrote %s (%d macros)" % (os.path.join(ADAT, "plddt_macros.tex"), len(macros)))
 
     fig = plt.figure(figsize=(13.5, 5.6))
     gs = fig.add_gridspec(1, 2, width_ratios=[1.0, 1.25], wspace=0.16)

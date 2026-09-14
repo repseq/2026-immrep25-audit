@@ -1,0 +1,27 @@
+source,epitope,n_pos,n_neg,within_auc
+VDJdb benchmark (mock negatives),RAQAPPPSW,20,24,0.04375
+VDJdb benchmark (mock negatives),FLRGRAYGL,26,26,0.3017751479289941
+VDJdb benchmark (mock negatives),CLGGLLTMV,23,23,0.38752362948960306
+VDJdb benchmark (mock negatives),FLYALALLL,35,34,0.40252100840336136
+VDJdb benchmark (mock negatives),AVFDRKSDAK,25,25,0.44
+VDJdb benchmark (mock negatives),IVTDFSVIK,30,30,0.4922222222222222
+VDJdb benchmark (mock negatives),QAKWRLQTL,22,22,0.5082644628099173
+VDJdb benchmark (mock negatives),GLCTLVAML,20,20,0.5449999999999999
+VDJdb benchmark (mock negatives),YVLDHLIVV,23,23,0.5595463137996219
+VDJdb benchmark (mock negatives),TTDPSFLGRY,31,31,0.5619146722164412
+VDJdb free pool (mispairings),KLGGALQAK,341,17,0.5699499741245472
+VDJdb free pool (mispairings),LLWNGPMAV,20,25,0.58
+VDJdb free pool (mispairings),LLAGIGTVPI,15,20,0.6066666666666667
+VDJdb benchmark (mock negatives),PTDNYITTY,27,27,0.6104252400548698
+VDJdb benchmark (mock negatives),NYNYLYRLF,27,31,0.6224611708482677
+VDJdb benchmark (mock negatives),RAKFKQLL,24,24,0.6406250000000001
+VDJdb benchmark (mock negatives),TPRVTGGGAM,23,23,0.6502835538752363
+VDJdb benchmark (mock negatives),LLAGIGTVPI,20,20,0.705
+TCRvdb (assay-labelled),GLCTLVAML,135,60,0.7593827160493827
+TCRvdb (assay-labelled),YLQPRTFLL,174,249,0.7917878410192495
+VDJdb benchmark (mock negatives),ATDALMTGF,23,23,0.7939508506616257
+VDJdb free pool (mispairings),GILGFVFTL,103,23,0.8108906711692697
+VDJdb benchmark (mock negatives),ELAGIGILTV,32,33,0.8399621212121212
+VDJdb benchmark (mock negatives),GILGFVFTL,23,23,0.8601134215500945
+VDJdb benchmark (mock negatives),LLYDANYFL,19,24,0.8684210526315789
+VDJdb benchmark (mock negatives),LLWNGPMAV,26,25,0.9092307692307692
