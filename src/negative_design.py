@@ -59,7 +59,7 @@ import validation_efficiency as V                                  # noqa: E402
 MAX_FPR = 0.1
 AUC_BEST = 0.60          # best of 126 IMMREP25 submissions (Richardson 2026)
 K_STEP = 2               # grid stride in false positives per pool; f = k/m is then exact
-N_DRAW = 200             # draws for the finite-sample envelope only; the equalities are exact
+N_DRAWS = 200             # draws for the finite-sample envelope only; the equalities are exact
 SEED = 0
 
 
@@ -137,7 +137,7 @@ def main():
             sx = specific_partial(bx, pool, peps)
             fx = generic_full(bx, pool, peps)
             draws = [float(np.mean(generic_partial(binders_random(pool, f, rng), pool, peps)))
-                     for _ in range(N_DRAW)]
+                     for _ in range(N_DRAWS)]
             rows.append(dict(
                 hla=r["hla"], n_pools=K, pool_size=m, n_false=k, f=f,
                 generic_exact=float(np.mean(gx)),
@@ -166,7 +166,7 @@ def main():
     print("peptide-blind generic oracle, macro-AUC_%.1f: exactly 0.5 at every f in [%.2f, %.2f] "
           "(max |deviation| over all %d peptide-by-f cells = %.3g)"
           % (MAX_FPR, f_lo, f_hi, len(t) * K, dev_pep))
-    print("  finite-sample envelope, %d Bernoulli draws per cell: %.4f - %.4f" % (N_DRAW, lo, hi))
+    print("  finite-sample envelope, %d Bernoulli draws per cell: %.4f - %.4f" % (N_DRAWS, lo, hi))
     print("  and it is ONE-SIDED: %d of %d cells put any draw below chance, because for equal "
           "pools sum_p (f_neg - f_pos) = 0 for any allocation, so only the second-order term "
           "survives" % (below, len(t)))
@@ -185,7 +185,7 @@ def main():
         "ndFhi": "%.2f" % f_hi,
         "ndNf": "%d" % t.f.nunique(),
         "ndNcells": "%d" % (len(t) * K),
-        "ndNdraw": "%d" % N_DRAW,
+        "ndNdraw": "%d" % N_DRAWS,
         "ndGeneric": "0.5",
         "ndGenericDev": "<10^{-12}" if dev_pep < 1e-12 else "%.3g" % dev_pep,
         "ndRandLo": "%.4f" % lo,

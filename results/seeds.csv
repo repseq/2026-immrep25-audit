@@ -8,5 +8,5 @@ pairwise,0,N_FOLDS=5
 utility,n/a,n/a
 validation_efficiency,0,N_SIM=4000
 transfer_germline,0,n/a
-negative_design,0,n/a
+negative_design,0,N_DRAWS=200
 scored_geometry,0,n/a
