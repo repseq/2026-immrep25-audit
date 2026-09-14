@@ -10,7 +10,9 @@ dump/*
 # Python
 __pycache__/
 *.pyc
-.venv/
+# .venv* covers the isolated embedder environment (.venv-embed, 826 MB of torch):
+# sceptr pins pandas<3 and cannot share the analysis environment. See src/embed_cache.py.
+.venv*/
 .ipynb_checkpoints/
 
 # Heavy intermediates: only summary .dat + figures + the small reproducibility caches

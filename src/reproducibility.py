@@ -43,10 +43,14 @@ PACKAGES = ("numpy", "pandas", "polars", "scipy", "sklearn", "igraph", "leidenal
 # modules whose seed constant governs a reported number
 SEEDED = ("epitope_free", "retrieval_baseline", "publicity_controls", "cohort_stats",
           "sensitivity", "pairwise", "utility", "validation_efficiency",
-          "transfer_germline", "negative_design", "scored_geometry")
+          "transfer_germline", "negative_design", "scored_geometry",
+          "embedding_comparison")
 # iptm_predictor, transferability and informativeness are deterministic -- no SEED, so
 # nothing for this table to report. Their tunables (N_GRID, MIN_CLASS) are probe
-# parameters, which probe_params.py reflects.
+# parameters, which probe_params.py reflects. embed_cache is likewise deterministic: it
+# runs pretrained models in inference and fits nothing, so the seed that matters for the
+# representation comparison is embedding_comparison's, which governs both the PCA
+# projection and the model it hands to pairwise.
 
 
 def overlap_matrix(coh, chain: str) -> pd.DataFrame:
