@@ -1,0 +1,53 @@
+score,source,epitope,within_auc
+iptm,TCRvdb (assay-labelled),GLCTLVAML,0.8135802469135802
+iptm,TCRvdb (assay-labelled),YLQPRTFLL,0.7769930295896229
+iptm,VDJdb benchmark (mock negatives),ATDALMTGF,0.7051039697542533
+iptm,VDJdb benchmark (mock negatives),AVFDRKSDAK,0.3552
+iptm,VDJdb benchmark (mock negatives),CLGGLLTMV,0.3591682419659735
+iptm,VDJdb benchmark (mock negatives),ELAGIGILTV,0.8759469696969697
+iptm,VDJdb benchmark (mock negatives),FLRGRAYGL,0.3727810650887574
+iptm,VDJdb benchmark (mock negatives),FLYALALLL,0.5218487394957984
+iptm,VDJdb benchmark (mock negatives),GILGFVFTL,0.947069943289225
+iptm,VDJdb benchmark (mock negatives),GLCTLVAML,0.6125
+iptm,VDJdb benchmark (mock negatives),IVTDFSVIK,0.4955555555555556
+iptm,VDJdb benchmark (mock negatives),LLAGIGTVPI,0.7825
+iptm,VDJdb benchmark (mock negatives),LLWNGPMAV,0.9569230769230769
+iptm,VDJdb benchmark (mock negatives),LLYDANYFL,0.8114035087719298
+iptm,VDJdb benchmark (mock negatives),NYNYLYRLF,0.6236559139784946
+iptm,VDJdb benchmark (mock negatives),PTDNYITTY,0.4897119341563786
+iptm,VDJdb benchmark (mock negatives),QAKWRLQTL,0.5289256198347108
+iptm,VDJdb benchmark (mock negatives),RAKFKQLL,0.546875
+iptm,VDJdb benchmark (mock negatives),RAQAPPPSW,0.04791666666666667
+iptm,VDJdb benchmark (mock negatives),TPRVTGGGAM,0.667296786389414
+iptm,VDJdb benchmark (mock negatives),TTDPSFLGRY,0.4984391259105099
+iptm,VDJdb benchmark (mock negatives),YVLDHLIVV,0.4839319470699433
+iptm,VDJdb free pool (mispairings),GILGFVFTL,0.9037568594343605
+iptm,VDJdb free pool (mispairings),KLGGALQAK,0.5564947386579265
+iptm,VDJdb free pool (mispairings),LLAGIGTVPI,0.6133333333333333
+iptm,VDJdb free pool (mispairings),LLWNGPMAV,0.638
+plddt,TCRvdb (assay-labelled),GLCTLVAML,0.7593827160493827
+plddt,TCRvdb (assay-labelled),YLQPRTFLL,0.7917878410192494
+plddt,VDJdb benchmark (mock negatives),ATDALMTGF,0.7939508506616257
+plddt,VDJdb benchmark (mock negatives),AVFDRKSDAK,0.44
+plddt,VDJdb benchmark (mock negatives),CLGGLLTMV,0.387523629489603
+plddt,VDJdb benchmark (mock negatives),ELAGIGILTV,0.8399621212121212
+plddt,VDJdb benchmark (mock negatives),FLRGRAYGL,0.30177514792899407
+plddt,VDJdb benchmark (mock negatives),FLYALALLL,0.40252100840336136
+plddt,VDJdb benchmark (mock negatives),GILGFVFTL,0.8601134215500945
+plddt,VDJdb benchmark (mock negatives),GLCTLVAML,0.545
+plddt,VDJdb benchmark (mock negatives),IVTDFSVIK,0.4922222222222222
+plddt,VDJdb benchmark (mock negatives),LLAGIGTVPI,0.705
+plddt,VDJdb benchmark (mock negatives),LLWNGPMAV,0.9092307692307692
+plddt,VDJdb benchmark (mock negatives),LLYDANYFL,0.868421052631579
+plddt,VDJdb benchmark (mock negatives),NYNYLYRLF,0.6224611708482676
+plddt,VDJdb benchmark (mock negatives),PTDNYITTY,0.6104252400548696
+plddt,VDJdb benchmark (mock negatives),QAKWRLQTL,0.5082644628099173
+plddt,VDJdb benchmark (mock negatives),RAKFKQLL,0.640625
+plddt,VDJdb benchmark (mock negatives),RAQAPPPSW,0.04375
+plddt,VDJdb benchmark (mock negatives),TPRVTGGGAM,0.6502835538752363
+plddt,VDJdb benchmark (mock negatives),TTDPSFLGRY,0.5619146722164412
+plddt,VDJdb benchmark (mock negatives),YVLDHLIVV,0.5595463137996219
+plddt,VDJdb free pool (mispairings),GILGFVFTL,0.8108906711692697
+plddt,VDJdb free pool (mispairings),KLGGALQAK,0.5699499741245472
+plddt,VDJdb free pool (mispairings),LLAGIGTVPI,0.6066666666666667
+plddt,VDJdb free pool (mispairings),LLWNGPMAV,0.58
