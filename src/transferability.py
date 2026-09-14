@@ -304,9 +304,6 @@ def main():
                      % (lab, macros["trfN%sCoh" % tag], macros["trfN%sRec" % tag],
                         macros["trfIptm%sMean" % tag], macros["trfIptm%sSd" % tag],
                         macros["trfSepIptm%s" % tag], r"\\"))
-        fh.write(r"\midrule" + "\n")
-        fh.write("none exist (IMMREP25) & -- & %s & -- & -- & -- %s\n"
-                 % (macros["trfNImm"], r"\\"))
         fh.write(r"\bottomrule" + "\n")
         fh.write(r"\end{tabular}" + "\n")
     print("wrote %s" % _tbl)
