@@ -43,7 +43,10 @@ PACKAGES = ("numpy", "pandas", "polars", "scipy", "sklearn", "igraph", "leidenal
 # modules whose seed constant governs a reported number
 SEEDED = ("epitope_free", "retrieval_baseline", "publicity_controls", "cohort_stats",
           "sensitivity", "pairwise", "utility", "validation_efficiency",
-          "transfer_germline")
+          "transfer_germline", "negative_design", "scored_geometry")
+# iptm_predictor, transferability and informativeness are deterministic -- no SEED, so
+# nothing for this table to report. Their tunables (N_GRID, MIN_CLASS) are probe
+# parameters, which probe_params.py reflects.
 
 
 def overlap_matrix(coh, chain: str) -> pd.DataFrame:
