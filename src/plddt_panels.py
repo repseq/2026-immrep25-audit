@@ -181,9 +181,10 @@ def main():
         "pldWithinSd": "%.4f" % float(np.std(within, ddof=1)),
         "pldWithinLo": "%.4f" % float(min(within)),
         "pldWithinHi": "%.4f" % float(max(within)),
-        "pldPooled": "%.4f" % pooled,
-        "pldPooledN": "%d" % allc.height,
-        "pldGap": "%.4f" % (float(np.mean(within)) - pooled),
+        # NO gap/pooled macro. The within-minus-pooled difference is reported to stdout and kept
+        # in results/, but it is not emitted: measured here it is NEGATIVE, because the pooled AUC
+        # is ~94% cross-epitope comparisons (see transferability.py for the exact decomposition),
+        # so it does not measure an offset penalty and must not be quotable from the text.
         "pldImmMedian": "%.2f" % float(imm["plddt"].median()),
         "pldNegMedian": "%.2f" % float(np.median(nb)),
         "pldImmBelowNeg": "%.1f" % (100 * float((imm["plddt"].to_numpy() < np.median(nb)).mean())),
