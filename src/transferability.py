@@ -48,6 +48,7 @@ import sys
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 from sklearn.metrics import roc_auc_score
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -55,6 +56,12 @@ sys.path.insert(0, os.path.join(REPO, "src"))
 HF = os.path.expanduser("~/hf/tcren_structures")
 RESULTS = os.path.join(REPO, "results")
 ADAT = os.path.join(REPO, "appendix", "analysis")
+# paths.TABLES honours AUDIT_MS_REPO, so a worktree session writes the table where it can
+# see it. The other emitters in this repo still hardcode the MAIN checkout -- deliberately
+# not fixed here, but it is a live trap: regenerating their tables from a worktree is
+# invisible to the worktree build.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import paths  # noqa: E402
 POS = os.path.join(RESULTS, "iptm_templates.csv")
 
 MIN_CLASS = 15           # per-epitope minimum per class, as in plddt_panels/iptm_compare
@@ -181,6 +188,19 @@ def main():
 
     # SPREAD ONLY. The decomposition's cross/pooled/W_diag terms stay in the CSV; emitting them
     # would let the text quote a "gap" that this module's own numbers show to be uninformative.
+    #
+    # 2026-09-14: three groups ADDED, none of them that gap. (a) trf*Mean / trfN*Rec -- per-arm
+    # MEAN within-epitope AUC and record count. The committed trf*Med are MEDIANS, equal to the
+    # mean only for the 2-cohort TCRvdb arm (0.7953); the 20-cohort mock arm is median 0.5379
+    # against mean 0.5841. Prose must not mix the two, so the mean is emitted explicitly to
+    # pair with the SD already emitted. (b) trfSep* -- median binder-minus-nonbinder confidence
+    # per arm: a distribution statistic, not a term of the AUC decomposition. (c) trfFit* --
+    # the ipTM~pLDDT fit, a relation BETWEEN the two scores, which cannot express a
+    # within-vs-pooled gap in either. The bar stands: nothing below emits cross, pooled or
+    # W_diag.
+    TT_SRC = "TCRvdb (assay-labelled)"
+    BM_SRC = "VDJdb benchmark (mock negatives)"
+    FP_SRC = "VDJdb free pool (mispairings)"
     TAG = {"TCRvdb (assay-labelled)": "Tt",
            "VDJdb benchmark (mock negatives)": "Bm",
            "VDJdb free pool (mispairings)": "Fp"}
@@ -203,6 +223,94 @@ def main():
             macros["trf%s%sMed" % (stag, tag)] = "%.4f" % float(np.median(v))
             macros["trf%s%sSd" % (stag, tag)] = (
                 "%.4f" % float(np.std(v, ddof=1)) if len(v) > 1 else "n/a")
+    # (a) per-arm MEAN within-epitope AUC and counts (the medians are emitted above)
+    ARM = {"Tt": [TT_SRC], "Bm": [BM_SRC], "Fp": [FP_SRC], "Cb": [BM_SRC, FP_SRC]}
+    for tag, srcs in ARM.items():
+        cc = cells[cells.source.isin(srcs)]
+        macros["trfN%sCoh" % tag] = "%d" % int(len(cc))
+        for s2, stag in SC.items():
+            rr = decompose(d, cc, s2)
+            macros["trf%s%sMean" % (stag, tag)] = "%.4f" % rr["within_macro"]
+            if tag == "Cb":
+                macros["trf%sCbSd" % stag] = "%.4f" % rr["within_sd"]
+                macros["trf%sCbLo" % stag] = "%.4f" % rr["within_lo"]
+                macros["trf%sCbHi" % stag] = "%.4f" % rr["within_hi"]
+            if s2 == "iptm":
+                macros["trfN%sRec" % tag] = "%d" % int(rr["n_records"])
+
+    # (b) median binder-minus-nonbinder separation per arm. IMMREP25 has no negatives in any
+    # structure set we hold, so it gets a level and no separation -- that asymmetry is the point.
+    for tag, srcs in (("Tt", [TT_SRC]), ("Bm", [BM_SRC]), ("Fp", [FP_SRC])):
+        g2 = d[d.source.isin(srcs)]
+        pp, nn = g2[g2.y == 1], g2[g2.y == 0]
+        macros["trfSepIptm%s" % tag] = "%.4f" % (pp.iptm.median() - nn.iptm.median())
+        macros["trfSepPld%s" % tag] = "%.4f" % (pp.plddt.median() - nn.plddt.median())
+        macros["trfNPos%s" % tag] = "%d" % len(pp)
+        macros["trfNNeg%s" % tag] = "%d" % len(nn)
+    gi = d[d.source == "IMMREP25"]
+    macros["trfImmIptmMed"] = "%.4f" % gi.iptm.median()
+    macros["trfImmPldMed"] = "%.4f" % gi.plddt.median()
+    macros["trfNImm"] = "%d" % len(gi)
+
+    # (c) ipTM ~ pLDDT. The IMMREP25 winner scored with a pLDDT statistic, so whether the two
+    # confidence channels co-vary decides whether our ipTM analysis speaks to that entry at all.
+    FITTAG = {TT_SRC: "Tt", BM_SRC: "Bm", FP_SRC: "Fp", "IMMREP25": "Imm"}
+    fitrows = []
+    for src, g2 in list(d.groupby("source")) + [("POOLED", d)]:
+        x = g2.plddt.to_numpy(float)
+        y = g2.iptm.to_numpy(float)
+        m = np.isfinite(x) & np.isfinite(y)
+        x, y = x[m], y[m]
+        r_ = float(stats.pearsonr(x, y)[0])
+        rho_ = float(stats.spearmanr(x, y)[0])
+        b_, a_ = (float(v) for v in np.polyfit(x, y, 1))
+        tag = "Pool" if src == "POOLED" else FITTAG[src]
+        macros["trfFitR%s" % tag] = "%.3f" % r_
+        macros["trfFitRho%s" % tag] = "%.3f" % rho_
+        macros["trfFitSlope%s" % tag] = "%.4f" % b_
+        macros["trfFitRsq%s" % tag] = "%.3f" % (r_ * r_)
+        macros["trfFitN%s" % tag] = "%d" % len(x)
+        fitrows.append((src, len(x), r_, rho_, b_, r_ * r_))
+    rs = [f[2] for f in fitrows[:-1]]
+    sl = [f[4] for f in fitrows[:-1]]
+    macros["trfFitRLo"] = "%.3f" % min(rs)
+    macros["trfFitRHi"] = "%.3f" % max(rs)
+    macros["trfFitSlopeLo"] = "%.4f" % min(sl)
+    macros["trfFitSlopeHi"] = "%.4f" % max(sl)
+    macros["trfFitNarm"] = "%d" % len(rs)
+
+    print("\n=== ipTM ~ pLDDT, added 2026-09-14 ===")
+    for src, n_, r_, rho_, b_, r2_ in fitrows:
+        print("  %-34s n=%5d r=%.3f rho=%.3f slope=%.4f r2=%.3f"
+              % (str(src)[:34], n_, r_, rho_, b_, r2_))
+
+    # the three-arm table, written where the CALLER can see it (honours AUDIT_MS_REPO).
+    # Raw strings throughout: an earlier version assembled these by substitution and Python
+    # turned \b and \t into BACKSPACE and TAB before the file was written.
+    os.makedirs(paths.TABLES, exist_ok=True)
+    _tbl = os.path.join(paths.TABLES, "confidence_transfer_table.tex")
+    with open(_tbl, "w") as fh:
+        fh.write("%% GENERATED by src/transferability.py -- do not edit.\n"
+                 "%% Regenerate: python src/transferability.py (2026-immrep25-audit repo).\n")
+        fh.write(r"\begin{tabular}{lrrrrr}" + "\n")
+        fh.write(r"\toprule" + "\n")
+        fh.write(r"negative class & cohorts & records & within-epitope "
+                 r"macro-AUC & SD & median $\Delta$ \\" + "\n")
+        fh.write(r"\midrule" + "\n")
+        for lab, tag in (("biological (invalidated real pairs)", "Tt"),
+                         ("combinatorial (shuffled receptors)", "Bm"),
+                         ("combinatorial (mispaired chains)", "Fp")):
+            fh.write("%s & %s & %s & %s & %s & %s %s\n"
+                     % (lab, macros["trfN%sCoh" % tag], macros["trfN%sRec" % tag],
+                        macros["trfIptm%sMean" % tag], macros["trfIptm%sSd" % tag],
+                        macros["trfSepIptm%s" % tag], r"\\"))
+        fh.write(r"\midrule" + "\n")
+        fh.write("none exist (IMMREP25) & -- & %s & -- & -- & -- %s\n"
+                 % (macros["trfNImm"], r"\\"))
+        fh.write(r"\bottomrule" + "\n")
+        fh.write(r"\end{tabular}" + "\n")
+    print("wrote %s" % _tbl)
+
     with open(os.path.join(ADAT, "transferability_macros.tex"), "w") as fh:
         for k, v in macros.items():
             fh.write("\\newcommand{\\%s}{%s}\n" % (k, v))
