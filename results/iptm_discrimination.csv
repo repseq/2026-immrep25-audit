@@ -1,0 +1,4 @@
+dataset,negatives,n,n_pos,n_neg,pooled_auc,within_auc,n_epitopes_matched
+TCRvdb,biological,618,309,309,0.7944512520815661,0.7952866382516015,2
+VDJdb binder benchmark,combinatorial,1089,523,566,0.579498544007459,0.5841377032273829,20
+VDJdb free pool,combinatorial,1994,997,997,0.5769042332614696,0.6778962328564051,4
