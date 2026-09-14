@@ -176,24 +176,55 @@ def main():
     print(ps.to_string(index=False))
 
     # ---- 3. what the peptide-blind bound becomes on that geometry ----
+    #
+    # The leaderboard's macro_score is a mean over ALL 18 scored pMHCs, so the bound on the
+    # REPORTED metric is the 18-pool combination -- not the larger of the two per-allele values.
+    # The alleles are disjoint receptor sets (each peptide's negatives are same-MHC only), so a
+    # single shared ranking attains each arm's block bound independently and the arms simply add:
+    #
+    #     bound = [ sum_a (1 + (K_a - 1) * floor) ] / sum_a K_a
+    #
+    # which is 0.5263 for the released 10 + 10 and rises when an arm loses peptides.
     print("\n=== peptide-blind bound, released design vs scored geometry ===")
+    floor = B.floor_value(MAX_FPR)
+    priv = part[part.arm == "private"]
     rows = []
-    for hla, g in ps.groupby("HLA"):
-        K = len(g)
-        sizes = g.n_scored.to_numpy()
-        labels = np.concatenate([np.full(n, i) for i, n in enumerate(sizes)])
-        peps = np.arange(K)
-        blk = B.macro(labels, peps, MAX_FPR)
-        rows.append(dict(hla=hla, n_pools=K, n_records=int(sizes.sum()),
-                         pool_min=int(sizes.min()), pool_max=int(sizes.max()),
-                         block=blk, equal_pool_analytic=B.ceiling(10, 50, MAX_FPR)))
+    for hla, g in priv.groupby("HLA"):
+        # per pool: positives are receptors whose COGNATE peptide is the scored one
+        cnt = (g.assign(is_pos=(g.Peptide == g.cognate))
+               .groupby("Peptide").is_pos.agg(n_pos="sum", n_rec="size"))
+        cnt["n_neg"] = cnt.n_rec - cnt.n_pos
+        K = len(cnt)
+        # the block construction floors every other pool only if the top pool's own receptors
+        # exhaust their false-positive budget. Asserted from the measured counts, never assumed.
+        margin = float(cnt.n_pos.min() - MAX_FPR * cnt.n_neg.max())
+        assert margin > 0, (
+            "at %s the smallest pool (%d receptors) no longer exhausts the largest pool's "
+            "budget (%.1f); the block construction and this formula must be re-derived"
+            % (hla, int(cnt.n_pos.min()), MAX_FPR * cnt.n_neg.max()))
+        rows.append(dict(hla=hla, n_pools=K, n_records=int(cnt.n_rec.sum()),
+                         pos_min=int(cnt.n_pos.min()), pos_max=int(cnt.n_pos.max()),
+                         neg_min=int(cnt.n_neg.min()), neg_max=int(cnt.n_neg.max()),
+                         regime_margin=margin,
+                         arm_bound=(1.0 + (K - 1) * floor) / K))
     bnd = pd.DataFrame(rows)
     print(bnd.to_string(index=False))
     bnd.to_csv(os.path.join(RESULTS, "scored_blind_bound.csv"), index=False)
-    worst = float(bnd.block.max())
-    print("\nreleased-design bound %.4f; on the scored geometry the block construction reaches "
-          "%.4f (%+.4f)" % (B.ceiling(10, 50, MAX_FPR), worst, worst - B.ceiling(10, 50, MAX_FPR)))
-    print("the leader's %.6f sits %+.4f above it" % (best, best - worst))
+
+    k_tot = int(bnd.n_pools.sum())
+    scored_bound = float((bnd.arm_bound * bnd.n_pools).sum() / k_tot)
+    released_bound = B.ceiling(10, 50, MAX_FPR)
+    # cross-check: the same combination written out from the floor alone
+    chk = (len(bnd) + (k_tot - len(bnd)) * floor) / k_tot
+    assert abs(chk - scored_bound) < 1e-12, (chk, scored_bound)
+    print("\nfloor %.6f (= 9/19); per-allele bounds %s over %d pools"
+          % (floor, ", ".join("%.4f" % b for b in bnd.arm_bound), k_tot))
+    print("released design (10 + 10 equal pools): %.4f" % released_bound)
+    print("SCORED geometry (%s pools): %.4f (%+.4f) -- this is the bound on the macro the "
+          "leaderboard reports" % (" + ".join(str(k) for k in bnd.n_pools), scored_bound,
+                                   scored_bound - released_bound))
+    print("the leader's %.6f sits %+.4f above it" % (best, best - scored_bound))
+    worst = scored_bound
 
     macros = {
         "scgNsub": "%d" % len(lb),
