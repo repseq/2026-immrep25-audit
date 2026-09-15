@@ -11,3 +11,4 @@ transfer_germline,0,n/a
 negative_design,0,N_DRAWS=200
 scored_geometry,0,n/a
 embedding_comparison,0,n/a
+learnability,0,n/a

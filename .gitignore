@@ -56,3 +56,6 @@ manuscript/*.bbl
 manuscript/*.blg
 manuscript/build*.log
 manuscript/figures/.build/
+
+# local exploration, not part of the analysis
+scratch/

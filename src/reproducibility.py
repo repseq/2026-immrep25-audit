@@ -44,7 +44,7 @@ PACKAGES = ("numpy", "pandas", "polars", "scipy", "sklearn", "igraph", "leidenal
 SEEDED = ("epitope_free", "retrieval_baseline", "publicity_controls", "cohort_stats",
           "sensitivity", "pairwise", "utility", "validation_efficiency",
           "transfer_germline", "negative_design", "scored_geometry",
-          "embedding_comparison")
+          "embedding_comparison", "learnability")
 # iptm_predictor, transferability and informativeness are deterministic -- no SEED, so
 # nothing for this table to report. Their tunables (N_GRID, MIN_CLASS) are probe
 # parameters, which probe_params.py reflects. embed_cache is likewise deterministic: it
@@ -172,7 +172,11 @@ def demo():
     v, s = versions(), seeds()
     assert (v.version != "").all() and len(v) >= len(PACKAGES)
     assert not s.empty and s.seed.notna().all()
-    assert not (s.seed.astype(str) == "import failed").any()
+    # startswith, not equality: seeds() writes "import failed: <ExcName>", so an equality test
+    # never matches and a module that fails to import passed this assert silently.
+    assert not s.seed.astype(str).str.startswith("import failed").any(), \
+        "a SEEDED module failed to import: %s" % \
+        s[s.seed.astype(str).str.startswith("import failed")].to_dict("records")
     print("reproducibility.demo OK  (%d cohorts on TCRbeta, diagonal exact, %d software "
           "components and %d seeded modules recorded)" % (len(num), len(v), len(s)))
 
