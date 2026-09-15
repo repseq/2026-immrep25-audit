@@ -55,6 +55,9 @@ MIN_REC = 40        # receptors an epitope needs in total to qualify as a traini
 MIN_HALF = 10       # ... and in each of the two receptor-disjoint halves
 CAP = 200           # receptors kept per epitope; VDJdb is skewed (median 2, max 29,698) and one
                     # epitope would otherwise supply a third of all training rows
+MIN_PURITY = 0.90   # share of an epitope's records its modal allele must carry to define a
+                    # same-allele panel; below this the epitope is left unassigned (see panels())
+ALLELE = "A*02:01"  # the only allele with a matched arm; A*02 is merged into it by _allele
 PANEL = 10          # epitopes per mimicked panel -- IMMREP25 uses ten per allele
 NEG = PANEL - 1     # negatives per positive, as IMMREP25 forms them
 N_HELDOUT = 20      # held-out epitopes for the internal arm, matching IMMREP25's twenty
@@ -75,9 +78,18 @@ def _canon(col: pl.Expr) -> pl.Expr:
 
 
 def _allele(col: pl.Expr) -> pl.Expr:
-    """`HLA-A*02:01,HLA-A*02` -> `A*02:01`: first entry, HLA- prefix dropped, two fields kept."""
+    """`HLA-A*02:01,HLA-A*02` -> `A*02:01`: first entry, HLA- prefix dropped, two fields kept,
+    then `A*02` -> `A*02:01`.
+
+    The final merge is load-bearing, not cosmetic. VDJdb annotates the same HLA-A2 restriction at
+    two depths, and without merging them the deepest A2 epitopes split across two allele strings:
+    NLVPMVATV carries only 30% of its records under its most common string, YVLDHLIVV 0.04% and
+    GLCTLVAML 3%. That fragments the same-MHC negative partition for exactly the epitopes holding
+    the most data, and drops A*02-annotated records from the A*02:01-matched arm altogether.
+    Mirrors learnability._norm_allele, which already does this."""
     first = col.cast(pl.Utf8).str.split(",").list.first().str.strip_prefix("HLA-")
-    return (first.str.split(":").list.slice(0, 2).list.join(":"))
+    two = first.str.split(":").list.slice(0, 2).list.join(":")
+    return pl.when(two == "A*02").then(pl.lit(ALLELE)).otherwise(two)
 
 
 def gene_map() -> dict[str, str]:
@@ -154,15 +166,45 @@ def qualifying(rec: pl.DataFrame, rng: np.random.Generator) -> pl.DataFrame:
     return pl.concat(out)
 
 
+def epitope_allele(rec: pl.DataFrame) -> dict[str, str]:
+    """Epitope -> its MODAL allele, for epitopes whose mode carries >= MIN_PURITY of their records.
+
+    The allele column is per RECORD, and VDJdb annotates a single epitope under several alleles, so
+    a per-record test is not a statement about the epitope: FLRGRAYGL carries stray A*02:01 records
+    while being a B*08:01 epitope. Both the same-allele negative partition and the A*02:01-matched
+    arm must select on this per-epitope assignment instead, or the matched arm trains on records
+    from epitopes of another restriction -- the fault this helper exists to remove.
+
+    Epitopes whose modal allele holds a minority of their records are omitted rather than assigned:
+    a plurality is not enough to define a same-MHC panel.
+    """
+    cnt = rec.group_by("peptide", "allele").agg(k=pl.len())
+    tot = rec.group_by("peptide").agg(tot=pl.len())
+    top = (cnt.join(tot, on="peptide")
+              .with_columns(purity=pl.col("k") / pl.col("tot"))
+              .sort(["peptide", "k", "allele"], descending=[False, True, False])
+              .group_by("peptide", maintain_order=True).first())
+    return {r["peptide"]: r["allele"] for r in
+            top.filter(pl.col("purity") >= MIN_PURITY).sort("peptide").to_dicts()}
+
+
 def panels(rec: pl.DataFrame, rng: np.random.Generator) -> dict[str, list[str]]:
     """For each epitope, up to NEG partner epitopes OF THE SAME ALLELE -- the set its receptors
     are re-paired against, mimicking IMMREP25's within-MHC negative construction. Alleles with
     too few qualifying epitopes fall back to any other epitope, which is recorded by the caller."""
-    # VDJdb reports some epitopes under more than one allele; take the lexicographic minimum so
-    # the same-allele partition is a function of the data rather than of row order
-    ep_allele = {r["peptide"]: r["allele"] for r in
-                 rec.group_by("peptide").agg(allele=pl.col("allele").min())
-                 .sort("peptide").to_dicts()}
+    # VDJdb reports some epitopes under more than one allele. Take the MODAL allele -- the one
+    # carrying most of the epitope's records -- not the lexicographic minimum. The minimum is
+    # order-independent, which was the stated intent, but it achieves that by picking the
+    # alphabetically smallest string: because "A*02:01" sorts before "B*07:02" and "B*08:01", one
+    # ambiguous record captured an epitope, and FLRGRAYGL (0% A*02), QAKWRLQTL (3%) and RPPIFIRRL
+    # (8%) entered a nominally A*02:01 panel while being B*08:01/B*07:02 epitopes. The mode is
+    # equally order-independent and is the assignment the data actually supports.
+    #
+    # The mode alone is not enough: it can be won on a bare plurality, and an epitope whose modal
+    # allele holds a minority of its records still breaks the same-MHC negative construction the
+    # partition exists to provide. Epitopes below MIN_PURITY are therefore assigned no allele and
+    # fall back to the any-epitope pool, which the caller already records.
+    ep_allele = epitope_allele(rec)
     by_allele: dict[str, list[str]] = {}
     for ep, al in ep_allele.items():
         by_allele.setdefault(al, []).append(ep)
@@ -369,7 +411,10 @@ def main():
               % (n_tr, 100 * cov))
         cov_rows.append(dict(chain=chain, gene_coverage=cov, n_train_rows=n_tr))
 
-        a2 = q.filter(pl.col("allele") == "A*02:01")
+        # select on the per-epitope modal allele, never on the per-record column: stray
+        # A*02:01 records of a B*08:01 epitope would otherwise train the "matched" arm
+        a2_eps = [e for e, al in epitope_allele(q).items() if al == ALLELE]
+        a2 = q.filter(pl.col("peptide").is_in(a2_eps))
         arms = [r_int, r_seen, r_tr]
         if a2["peptide"].n_unique() >= PANEL:
             pan2 = panels(a2, np.random.default_rng(SEED))
