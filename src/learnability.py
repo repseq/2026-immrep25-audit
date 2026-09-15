@@ -124,7 +124,7 @@ V_RESPELL = {"TRAV14": "TRAV14/DV4", "TRAV23": "TRAV23/DV6", "TRAV29": "TRAV29/D
 V_DEAD = ("TRBV23-1",)      # no functional alleles; the carrying receptor is dropped, not imputed
 
 REP_LABEL = {"sceptr": "SCEPTR", "esm": "ESM-2 (35M)"}
-ARM_LABEL = {"seen": "seen in training", "unseen": "held out"}
+ARM_LABEL = {"seen": "seen", "unseen": "held out"}
 
 
 # --------------------------------------------------------------------------- #
@@ -623,7 +623,7 @@ def emit_macros(t: pd.DataFrame, pf: pd.DataFrame) -> dict:
     lo, hi = v.loc[v.n_pos.idxmin()], v.loc[v.auc01.idxmin()]
     m.update({
         "lrnRho": "%.3f" % rho,
-        "lrnRhoP": "%.2f" % pval,
+        "lrnRhoP": "%.3f" % pval,
         "lrnNtied": "%d" % int((v.n_pos == v.n_pos.max()).sum()),
         "lrnNtiedPos": "%d" % int(v.n_pos.max()),
         "lrnShallowPep": str(lo.peptide),
@@ -636,7 +636,7 @@ def emit_macros(t: pd.DataFrame, pf: pd.DataFrame) -> dict:
     ve = pf[(pf.dataset == "vdjdb") & (pf.rep == "esm") & (pf.arm == "seen")]
     rhoe, pvale = spearmanr(ve.n_pos, ve.auc01)
     m["lrnRhoE"] = "%.3f" % rhoe
-    m["lrnRhoPE"] = "%.2f" % pvale
+    m["lrnRhoPE"] = "%.3f" % pvale
 
     path = os.path.join(ADAT, "learnability_macros.tex")
     with open(path, "w") as fh:
@@ -672,8 +672,8 @@ def write_table(t: pd.DataFrame):
                  " (from the 2026-immrep25-audit repo).\n")
         fh.write(r"\begin{tabular}{lllrrrrr}" + "\n")
         fh.write(r"\toprule" + "\n")
-        fh.write("dataset & representation & epitope & rows & macro-AUC$_{0.1}$ & "
-                 "peptides clearing leader & $G$ & $\\Delta$AIC \\\\\n")
+        fh.write("dataset & encoder & epitope & rows & macro-AUC$_{0.1}$ & "
+                 "clearing leader & $G$ & $\\Delta$AIC \\\\\n")
         fh.write(r"\midrule" + "\n")
         for i, (ds, rep, arm) in enumerate(order):
             if i == 4:
