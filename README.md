@@ -89,7 +89,7 @@ figure sources live in [`appendix/analysis/`](appendix/analysis/). See [`SOURCES
 
 ## Reproduce
 
-`uv` env (Python 3.12, `pyproject.toml` + `uv.lock`): `uv sync --extra gen --extra embed`, then
+`uv` env (`requires-python >= 3.11`; results reported here were produced on 3.13.14, `pyproject.toml` + `uv.lock`): `uv sync --extra gen --extra embed`, then
 prefix commands with `uv run` (or `source .venv/bin/activate`). The two extras are needed by the
 pipeline below and are NOT installed by a bare `uv sync`: `gen` brings OLGA, which
 `src/compute_1mm.py` and `src/olga_control.py` import, and `embed` brings torch/transformers for
