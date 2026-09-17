@@ -244,6 +244,10 @@ def main():
         "scgKmin": "%d" % int(bnd.n_pools.min()),
         "scgKmax": "%d" % int(bnd.n_pools.max()),
         "scgBound": "%.4f" % worst,
+        # the per-arm caps Eq. (4) gives before the pool-weighted combination; the supplement
+        # quotes both, so they are emitted rather than left for a reader to recompute
+        "scgArmA": "%.4f" % bnd.arm_bound.max(),
+        "scgArmB": "%.4f" % bnd.arm_bound.min(),
         "scgBoundReleased": "%.4f" % B.ceiling(10, 50, MAX_FPR),
         "scgBoundShift": "%.4f" % (worst - B.ceiling(10, 50, MAX_FPR)),
         "scgLeaderGap": "%.4f" % (best - worst),
