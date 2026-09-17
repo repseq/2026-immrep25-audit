@@ -166,7 +166,8 @@ python src/reproducibility.py             # cohort overlap matrix, package versi
 # 6b. the two embedding comparisons. These need a SECOND environment: `sceptr` is deliberately
 #     absent from pyproject.toml because it downgrades pandas, so the embedders live in
 #     `.venv-embed` and hand off through .npy files. Run the cache step there, the scoring
-#     step in the main env.
+#     step in the main env. Build it once with
+#     `uv venv .venv-embed --python 3.11 && VIRTUAL_ENV=.venv-embed uv pip install sceptr torch transformers`.
 python src/embed_cache.py                 # [.venv-embed] SCEPTR + its published ablations,
                                           # ESM-2 at two scales, TCR-BERT -> cache/embed/
 python src/embedding_comparison.py        # 14 representations, one fixed protocol

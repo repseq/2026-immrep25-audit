@@ -21,7 +21,7 @@ figure in the paper comes from a macro emitted here.
 - `.venv-embed` (py3.11, pandas 2.3.3, sceptr 1.2.0, torch, transformers) — **no sklearn, no
   polars**. `sceptr` downgrades pandas, and every committed macro was produced under 3.0.5, so the
   embedders live here and communicate only through `.npy` files. `sceptr` is not in
-  `pyproject.toml`; this venv is provisioned out of band.
+  `pyproject.toml`; README section 6b carries the one-line command that builds it.
 
 ## Conventions
 - Every module has a `--demo` with load-bearing asserts; `src/reproducibility.py` records seeds for
@@ -31,10 +31,21 @@ figure in the paper comes from a macro emitted here.
   **derived** — append on first use, never guess a path.
 
 ## Open loops / next steps
-- **Next task: rework `rebuttal/RESPONSE.txt` and `APPEAL.txt`** in the manuscript repo. Quote-level
-  staleness from the terminology sweep is fixed and all 45 quoted passages verify as searchable
-  against the built PDFs; what remains is writing the matched-geometry result into the response as
-  the answer to "a better method would find it".
+- **DONE 2026-09-17: both letters are finished.** `rebuttal/RESPONSE.txt` is deleted; the
+  journal-facing document is the generated `rebuttal/REVIEWER_RESPONSE_BY_POINT.txt`, which quotes
+  every reviewer statement verbatim and is checked by `rebuttal/check_response.py` (see that repo's
+  CLAUDE.md). *Searchable* was the wrong test and passed two paraphrases -- the test is a normalised
+  full-substring match against the two submitted PDFs only.
+- **`requirements.txt` is now an exact pinned export of `uv.lock`, not a hand-written list
+  (2026-09-17).** It was a conda-era leftover from the first commit, referenced by nothing, and it
+  contradicted `pyproject.toml` on every floor (`pandas>=3.0` against `>=2.2`, `scikit-learn>=1.9`
+  against `>=1.4`), claimed Python 3.12 where the recorded run is 3.13.14, described ONE environment
+  including torch where the split is mandatory, and published a private interpreter path
+  (`/opt/homebrew/Caskroom/miniconda/...`) in a public repo. Regenerate with
+  `uv export --no-hashes --no-emit-project > requirements.txt`; never hand-edit it.
+  **`pyproject.toml` sets only floors, so it is `uv.lock` that is the reproducibility record** --
+  its 100 pins reproduce all 9 library versions in `results/versions.csv` exactly, which is why the
+  manuscript's Methods points at the lock file and not at the version list alone.
 - **`transfer_germline.panels()` assigns each epitope its lexicographic-minimum allele**, so
   `FLRGRAYGL` (0% of its records A*02), `QAKWRLQTL` (3%) and `RPPIFIRRL` (8%) enter a nominally
   A*02:01 panel while being B*08:01/B*07:02 epitopes; 35 of 1,739 epitopes are affected. The
