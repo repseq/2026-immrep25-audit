@@ -146,10 +146,38 @@ python src/iptm_compare.py                # folding confidence by cohort and epi
 python src/contact_gof.py                 # contact-potential goodness of fit
 python src/probe_params.py                # Table S9, read out of the modules themselves
 
-# 6. figures, then the manuscript (sibling repo)
+# 6. bounds, learned baselines and the matched-geometry comparison
+#    (added at revision; these produce the results the response to reviewers cites)
+python src/negative_design.py             # within-MHC negative design: any peptide-blind
+                                          # scorer is pinned at chance, Sum_p AUC_p = K/2
+python src/scored_geometry.py             # peptide-blind cap on the 18 pools actually scored
+python src/informativeness.py             # three-channel ordering: f transfers as a LOWER bound
+python src/validation_efficiency.py       # (above) the 1 - f/2 ceiling and its crossover
+python src/epitope_free.py                # receptor-only scores across 126 score x allele cells
+python src/pairwise.py                    # 187-feature pairwise cognate/non-cognate discriminator
+python src/transfer_germline.py           # trained on VDJdb, scored blind on IMMREP25,
+                                          # with the probe-power control inside VDJdb
+python src/cohort_stats.py                # size-matched rarefaction + minimum detectable effect
+python src/covariates.py                  # HC3 covariate adjustment of the cohort effect
+python src/iptm_predictor.py              # ipTM on biological vs combinatorial negatives
+python src/transferability.py             # confidence transfer by negative class; Table S9
+python src/reproducibility.py             # cohort overlap matrix, package versions, seeds
+
+# 6b. the two embedding comparisons. These need a SECOND environment: `sceptr` is deliberately
+#     absent from pyproject.toml because it downgrades pandas, so the embedders live in
+#     `.venv-embed` and hand off through .npy files. Run the cache step there, the scoring
+#     step in the main env.
+python src/embed_cache.py                 # [.venv-embed] SCEPTR + its published ablations,
+                                          # ESM-2 at two scales, TCR-BERT -> cache/embed/
+python src/embedding_comparison.py        # 14 representations, one fixed protocol
+python src/learnability_embed.py          # [.venv-embed] background PCA bases + panel embeddings
+python src/learnability.py                # one model, VDJdb vs IMMREP25, matched geometry;
+                                          # macro-AUC0.1, information gain G, DeltaAIC, Table S10
+
+# 7. figures, then the manuscript (sibling repo)
 python src/figures.py                     # matplotlib panels -> results/figures/
 cd ../2026-immrep25-audit-ms && make figs && \
-  make -C bioinf-latex && make -C biorxiv-latex && make -C suppl-latex
+  make -C briefbioinf-latex && make -C briefsuppl-latex
 
 python tests/test_homology.py             # unit tests
 ```
