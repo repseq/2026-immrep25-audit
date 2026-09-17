@@ -10,4 +10,11 @@ igraph,1.0.0
 leidenalg,0.12.0
 networkx,3.6.1
 Bio,1.88
-analysis repo commit,9288ce4
+olga,1.3.0
+sceptr (.venv-embed),1.2.0
+torch (.venv-embed),2.14.0
+transformers (.venv-embed),5.17.0
+ESM-2 35M,facebook/esm2_t12_35M_UR50D
+ESM-2 650M,facebook/esm2_t33_650M_UR50D
+TCR-BERT,wukevin/tcr-bert-mlm-only
+analysis repo commit,c33c20e (uncommitted changes present)

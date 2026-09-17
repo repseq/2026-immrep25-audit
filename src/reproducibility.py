@@ -25,6 +25,7 @@ from __future__ import annotations
 import importlib
 import os
 import platform
+import re
 import subprocess
 import sys
 
@@ -39,7 +40,12 @@ ADAT = os.path.join(REPO, "appendix", "analysis")
 from cohorts import build_cohorts, COHORT_META          # noqa: E402
 
 PACKAGES = ("numpy", "pandas", "polars", "scipy", "sklearn", "igraph", "leidenalg",
-            "networkx", "Bio")
+            "networkx", "Bio", "olga")
+# The embedders run in .venv-embed (sceptr pins pandas<3), so their versions cannot be read by
+# importing them here -- they are read from that environment's installed metadata instead, which
+# keeps the same discipline: recorded from what is installed, never transcribed.
+EMBED_ENV = os.path.join(REPO, ".venv-embed")
+EMBED_PACKAGES = ("sceptr", "torch", "transformers")
 # modules whose seed constant governs a reported number
 SEEDED = ("epitope_free", "retrieval_baseline", "publicity_controls", "cohort_stats",
           "sensitivity", "pairwise", "utility", "validation_efficiency",
@@ -72,6 +78,36 @@ def overlap_matrix(coh, chain: str) -> pd.DataFrame:
     return M
 
 
+def embed_env_versions() -> list:
+    """Versions installed in .venv-embed, read from its metadata without importing it."""
+    import glob
+    from importlib.metadata import Distribution
+    sites = glob.glob(os.path.join(EMBED_ENV, "lib", "python*", "site-packages"))
+    found = {}
+    for d in Distribution.discover(path=sites):
+        name = (d.metadata["Name"] or "").lower()
+        if name in EMBED_PACKAGES:
+            found[name] = d.version
+    return [dict(component="%s (.venv-embed)" % p, version=found.get(p, "absent"))
+            for p in EMBED_PACKAGES]
+
+
+def checkpoints() -> list:
+    """Pretrained checkpoints, read from embed_cache.py's own constants.
+
+    Parsed rather than imported: embed_cache imports torch, which is not in this environment.
+    A model's identity IS its version, so the checkpoint string is what has to be reported.
+    """
+    src = open(os.path.join(REPO, "src", "embed_cache.py")).read()
+    rows = []
+    for key, pat in (("ESM-2 35M", r'"esm2_35M":\s*"([^"]+)"'),
+                     ("ESM-2 650M", r'"esm2_650M":\s*"([^"]+)"'),
+                     ("TCR-BERT", r'TCRBERT\s*=\s*"([^"]+)"')):
+        m = re.search(pat, src)
+        rows.append(dict(component=key, version=m.group(1) if m else "not found"))
+    return rows
+
+
 def versions() -> pd.DataFrame:
     rows = [dict(component="python", version=platform.python_version()),
             dict(component="platform", version="%s %s" % (platform.system(),
@@ -79,9 +115,18 @@ def versions() -> pd.DataFrame:
     for p in PACKAGES:
         try:
             m = importlib.import_module(p)
-            rows.append(dict(component=p, version=getattr(m, "__version__", "unknown")))
+            ver = getattr(m, "__version__", None)
+            if ver is None:                       # olga exposes no __version__
+                from importlib.metadata import version as _v, PackageNotFoundError
+                try:
+                    ver = _v(p)
+                except PackageNotFoundError:
+                    ver = "unknown"
+            rows.append(dict(component=p, version=ver))
         except ImportError:
             rows.append(dict(component=p, version="absent"))
+    rows.extend(embed_env_versions())
+    rows.extend(checkpoints())
     try:
         sha = subprocess.run(["git", "-C", REPO, "rev-parse", "--short", "HEAD"],
                              capture_output=True, text=True, timeout=20).stdout.strip()
@@ -143,13 +188,23 @@ def main():
              "ovImmPs": ("immrep25_pos", "pairseq_mock")}
     macros = {k: "%.1f" % (100 * ov(*p)) for k, p in pairs.items() if np.isfinite(ov(*p))}
     macros["ovNcohorts"] = "%d" % len(B)
-    for comp in ("python", "numpy", "pandas", "scipy", "sklearn"):
+    # one macro per recorded component, so the supplement can never quote a version this
+    # pipeline did not observe; a missing macro is a hard LaTeX failure
+    for comp, key in (("python", "Python"), ("numpy", "Numpy"), ("pandas", "Pandas"),
+                      ("scipy", "Scipy"), ("sklearn", "Sklearn"), ("polars", "Polars"),
+                      ("igraph", "Igraph"), ("leidenalg", "Leidenalg"),
+                      ("networkx", "Networkx"), ("Bio", "Biopython"), ("olga", "Olga"),
+                      ("sceptr (.venv-embed)", "Sceptr"), ("torch (.venv-embed)", "Torch"),
+                      ("transformers (.venv-embed)", "Transformers"),
+                      ("ESM-2 35M", "EsmSmall"), ("ESM-2 650M", "EsmLarge"),
+                      ("TCR-BERT", "Tcrbert")):
         r = v[v.component == comp]
         if not r.empty:
-            macros["ver" + comp.capitalize()] = str(r.version.iloc[0])
+            macros["ver" + key] = str(r.version.iloc[0])
     with open(os.path.join(ADAT, "reproducibility_macros.tex"), "w") as fh:
         for k, val in macros.items():
-            fh.write("\\newcommand{\\%s}{%s}\n" % (k, val))
+            # checkpoint names carry underscores, which are LaTeX maths shifts unescaped
+            fh.write("\\newcommand{\\%s}{%s}\n" % (k, val.replace("_", "\\_")))
     print("\nwrote results/overlap_TR{A,B}.csv, versions.csv, seeds.csv")
     print("wrote %s (%d macros)" % (os.path.join(ADAT, "reproducibility_macros.tex"),
                                     len(macros)))
