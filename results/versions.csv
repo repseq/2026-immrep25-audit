@@ -17,4 +17,4 @@ transformers (.venv-embed),5.17.0
 ESM-2 35M,facebook/esm2_t12_35M_UR50D
 ESM-2 650M,facebook/esm2_t33_650M_UR50D
 TCR-BERT,wukevin/tcr-bert-mlm-only
-analysis repo commit,c33c20e (uncommitted changes present)
+analysis repo commit,814528d
