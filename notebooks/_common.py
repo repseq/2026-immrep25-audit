@@ -5,9 +5,10 @@ import pandas as pd
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS = os.path.join(REPO, "results")
 
-# display order high -> low signal (matches src/cohorts.HIERARCHY)
+# display order high -> low signal; kept identical to src/cohorts.HIERARCHY
 ORDER = ["tcrvdb_true", "vdjdb_hq", "immrep22_true", "vdjdb_lq", "tcrvdb_false",
-         "immrep25_pos", "airr_top", "mlr_prolif", "airr_control", "olga_random"]
+         "immrep25_pos", "pairseq_mock",
+         "mlr_prolif", "airr_control", "olga_random"]
 
 
 def load(name: str) -> pd.DataFrame:
