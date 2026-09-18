@@ -6,8 +6,10 @@ figure in the paper comes from a macro emitted here.
 
 ## The contract with the manuscript
 - Each module emits `appendix/analysis/<name>_macros.tex` (`\newcommand` per value, pre-formatted
-  strings — never `str(float)`), and the five LaTeX builds concatenate those into `numbers.tex`.
-  **Adding a macro file means wiring it into all five `MACROS` lists.**
+  strings — never `str(float)`), and both LaTeX builds concatenate those into `numbers.tex`.
+  **Adding a macro file means wiring it into both `MACROS` lists** (`briefbioinf-latex/Makefile`
+  and `briefsuppl-latex/Makefile`, 37 entries each). A missing macro is a hard LaTeX failure, which
+  is the point: the paper cannot quote a value this pipeline did not produce.
 - Macro names are globally unique across `appendix/analysis/*_macros.tex`; `\newcommand` makes a
   duplicate a hard LaTeX error. There is no collision script — check by hand:
   `cat appendix/analysis/*_macros.tex | grep -o '\newcommand{\\[A-Za-z]*}' | sort | uniq -d`
@@ -15,6 +17,12 @@ figure in the paper comes from a macro emitted here.
   two different values of it end up in one paper.
 - Tables written into the manuscript repo go through `src/paths.py`. **Export `AUDIT_MS_REPO` when
   working from a git worktree**, or they land in the main checkout where the caller cannot see them.
+- Three numbers reach the paper as literals rather than macros: the circos link counts 173 and 893
+  in Fig. 3's caption, which carry a `%` provenance comment beside them, and the exact-match
+  publicity rate (2 of 1000 positives, `\num{0.2}\%`). `src/publicity.py` computes no exact-only
+  rate to export — `is_public` short-circuits on the exact test before the Hamming ≤ 1 test, and
+  `results/publicity_fractions.csv` records only the Hamming ≤ 1 figures. Anything else in the prose
+  should be a macro.
 
 ## Environments — the split is mandatory
 - `.venv` (py3.13, pandas 3.0.5, sklearn 1.9.0, polars 1.44.2) — everything except embedding.
@@ -22,6 +30,14 @@ figure in the paper comes from a macro emitted here.
   polars**. `sceptr` downgrades pandas, and every committed macro was produced under 3.0.5, so the
   embedders live here and communicate only through `.npy` files. `sceptr` is not in
   `pyproject.toml`; README section 6b carries the one-line command that builds it.
+- **`pyproject.toml` sets only floors, so `uv.lock` is the reproducibility record** — its pins
+  reproduce all 9 library versions in `results/versions.csv` exactly, which is why the manuscript's
+  Methods points at the lock file. `requirements.txt` is a generated export of that lock, for pip
+  users: regenerate with `uv export --no-hashes --no-emit-project > requirements.txt`, never
+  hand-edit it.
+- `src/reproducibility.py` writes `results/versions.csv`, and its `main()` writes the overlap
+  matrices **before** reading `git status`. Run it on a clean tree, or the record stamps itself
+  "uncommitted changes present".
 
 ## Conventions
 - Every module has a `--demo` with load-bearing asserts; `src/reproducibility.py` records seeds for
@@ -29,30 +45,14 @@ figure in the paper comes from a macro emitted here.
 - WIP scripts open with a comment preamble: what it does, why, and a date.
 - `SOURCES.md` records every dataset's origin and whether each value is **experimental** or
   **derived** — append on first use, never guess a path.
+- Private TCRvdb/MATCHMAKERS data: derived statistics only, never committed.
 
-## Open loops / next steps
-- **DONE 2026-09-17: both letters are finished.** `rebuttal/RESPONSE.txt` is deleted; the
-  journal-facing document is the generated `rebuttal/REVIEWER_RESPONSE_BY_POINT.txt`, which quotes
-  every reviewer statement verbatim and is checked by `rebuttal/check_response.py` (see that repo's
-  CLAUDE.md). *Searchable* was the wrong test and passed two paraphrases -- the test is a normalised
-  full-substring match against the two submitted PDFs only.
-- **`requirements.txt` is now an exact pinned export of `uv.lock`, not a hand-written list
-  (2026-09-17).** It was a conda-era leftover from the first commit, referenced by nothing, and it
-  contradicted `pyproject.toml` on every floor (`pandas>=3.0` against `>=2.2`, `scikit-learn>=1.9`
-  against `>=1.4`), claimed Python 3.12 where the recorded run is 3.13.14, described ONE environment
-  including torch where the split is mandatory, and published a private interpreter path
-  (`/opt/homebrew/Caskroom/miniconda/...`) in a public repo. Regenerate with
-  `uv export --no-hashes --no-emit-project > requirements.txt`; never hand-edit it.
-  **`pyproject.toml` sets only floors, so it is `uv.lock` that is the reproducibility record** --
-  its 100 pins reproduce all 9 library versions in `results/versions.csv` exactly, which is why the
-  manuscript's Methods points at the lock file and not at the version list alone.
-- **`transfer_germline.panels()` assigns each epitope its lexicographic-minimum allele**, so
-  `FLRGRAYGL` (0% of its records A*02), `QAKWRLQTL` (3%) and `RPPIFIRRL` (8%) enter a nominally
-  A*02:01 panel while being B*08:01/B*07:02 epitopes; 35 of 1,739 epitopes are affected. The
-  recorded `\xferMat*` values may therefore score partly cross-allele panels. `src/learnability.py`
-  uses the modal rule instead and asserts purity. **Nothing recomputed — the author's call.**
-- **Three prose numbers have no macro and no CSV**: the exact-match publicity `0.3%` (3 sites) and
-  the circos 173/893 in Fig. 3's caption. `src/publicity.py` prints the first at runtime but never
-  persists it. Exporting them needs a re-run, which has not been authorised.
+## Retained but no longer live
 - `src/germline_baseline.py` and its two CSVs stay on disk although the germline claim was withdrawn
   from the manuscript: `src/utility.py` reads `results/germline_roc.csv` for its empirical ROC.
+  `germline_macros.tex` is the one macro file deliberately absent from both `MACROS` lists.
+- `src/build_airr.py` still writes `results/airr_top.tsv` and `results/airr_donors.tsv` for the
+  AIRR non-random control, which was dropped from the cohort ladder — `src/cohorts.py` carries the
+  pairSEQ mock in that role. Nothing reads those two files.
+- `src/olga_control.py` is a library (pgen matching and generation) imported by `build_olga.py` and
+  `compute_1mm.py`. Running it directly only prints a timing check; it writes no cohort.
