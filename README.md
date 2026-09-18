@@ -1,91 +1,81 @@
-# immrep25 data-quality audit
+# IMMREP25 data-quality audit
 
-Does the **immrep25** unseen-peptide benchmark's *positive* TCR–peptide set carry
-epitope-specific signal, or only **noise and publicity**? We answer with two
-biologically-grounded probes — CDR3 **homology** and V/J **chain pairing** —
-calibrated against cohorts of known quality and a generation-probability-matched
-random floor.
+How much epitope-specific signal can the **IMMREP25** unseen-peptide benchmark register at
+all? We bound the score any method can reach on it from its negative design and its labels
+alone, before any method is run, and then place its positive set with four probes — CDR3
+**homology**, V/J **chain pairing**, an **ESM-2** embedding and predicted **interface
+geometry** — calibrated against cohorts of known label quality and antigen-free controls.
 
 ![Homology graph per cohort](docs/assets/homology_graph.png)
 
 *Homology graph (TRβ): nodes = CDR3, edges = Hamming ≤ 1, colour = epitope.
 Verified cohorts (VDJdb-HQ, TCRvdb-true) form dense epitope-coloured cliques;
-**immrep25 and the OLGA random control are near-edgeless point clouds**.*
+**IMMREP25 and the OLGA random control are near-edgeless point clouds**.*
 
 ## Outline
 
-1. [**Cohorts**](src/cohorts.py) — six datasets on a common schema, spanning the
+1. [**Cohorts**](src/cohorts.py) — ten datasets on a common schema, spanning the
    expected signal-to-noise range (below).
 2. [**Homology test**](src/homology.py) — within- vs between-epitope CDR3
    near-neighbour enrichment, per chain, with a [graph view](src/homology_graph.py)
    and a per-epitope breakdown.
 3. [**Pairing test**](src/pairing.py) — per-epitope V/J gene-usage bias and
    inter-chain mutual information vs permutation nulls.
-4. [**Controls**](src/build_airr.py) — real (AIRR pooled + 20 SRA donors) and generative (OLGA) noise floors.
+4. [**Controls**](src/build_pairseq.py) — antigen-free floors: a real pooled repertoire, an
+   OLGA-generated pool, and a [mock benchmark](src/build_pairseq.py) built by IMMREP25's own
+   selection rule over a peptide-free plate.
 5. [**Publicity control**](src/publicity.py) — is the residual signal just public TCRs?
-6. [**Supplementary Material**](manuscript/supplementary.pdf) — extended-data figures (S1–S7) + full epitope table (S1).
+6. [**Benchmark bounds**](src/blind_ceiling.py) — what the design caps before any method
+   runs: the [within-MHC negative construction](src/negative_design.py) and the
+   [label-noise ceiling](src/validation_efficiency.py).
 
 ## Result
 
-**One-vs-many** per epitope (each epitope with ≥30 records scored vs. the rest of its
-cohort), aggregated across epitopes (geometric mean ± 95% CI; no bootstrap). A generative
-control (OLGA) plus real-repertoire controls (AIRR) fix the noise floor at S/N=1. TRβ:
+**One-vs-many** per epitope: each epitope with ≥30 records is scored against the rest of its
+cohort and the cohort value is the geometric mean over its epitopes, with a 95% CI from the
+epitope-to-epitope spread (no bootstrap). Antigen-free controls fix the background at S/N = 1.
+TCRβ at Hamming ≤ 1, read from `results/homology_sn.csv` and `results/pairing.csv`:
 
-| cohort | homology S/N (β) | gene-bias (bits) | inter-chain MI (bits) |
-|---|--:|--:|--:|
-| VDJdb HQ (≥2 refs, either chain) | 1756 | 1.62 | 1.29 |
-| TCRvdb true (p_adj<1e-5) | 496 | 0.41 | 1.04 |
-| TCRvdb false (p_adj≥1e-5) | 86 | 0.15 | 0.33 |
-| VDJdb LQ (1 ref) | 30 | 0.96 | 0.44 |
-| **immrep25 positives** | **2.7** | **0.20** | **0.05** |
-| MLR expanded (real proliferating β, MIRA-analogue) | 1.9 | — | — |
-| AIRR non-random (20 real donors, top-50 clonotypes) | 1.04 | ~0.02 | ~0 |
-| AIRR random (pooled real repertoire, random labels) | 1.0 | 0.00 | ~0 |
-| OLGA random (raw generation) | 0.97 | 0.00 | ~0 |
+| cohort | homology S/N (β) | 95% CI | epitopes | V/J gene bias, β (bits) | inter-chain MI (bits) |
+|---|--:|:--:|--:|--:|--:|
+| TCRvdb positives (functionally validated) | **149** | 109–204 | 2 | 0.42 | 1.04 |
+| TCRvdb negatives (screen did not reproduce) | 27.9 | 16.0–48.6 | 2 | 0.20 | 0.33 |
+| VDJdb high-confidence (≥2 studies) | **14.8** | 11.5–19.0 | 83 | 0.46 | 0.51 |
+| IMMREP22 positives (*seen*-peptide benchmark) | 4.06 | 1.21–13.6 | 7 | 0.38 | 0.28 |
+| VDJdb low-confidence (1 study) | 3.49 | 2.38–5.12 | 50 | 0.22 | 0.17 |
+| **IMMREP25 positives** | **2.38** | **1.48–3.82** | **20** | **0.17** | **0.05** |
+| MLR expanded (real proliferating β clones) | 1.97 | 1.31–2.96 | 12 | — | — |
+| AIRR random (pooled real repertoire, random labels) | 1.00 | 1.00–1.00 | 20 | 0.02 | −0.00 |
+| OLGA random (raw generation) | 0.97 | 0.96–0.99 | 20 | 0.01 | −0.00 |
+| pairSEQ mock (plate that never saw a peptide) | 0.95 | 0.86–1.05 | 20 | 0.04 | −0.00 |
 
-- immrep25 positives sit **just above the noise floor** (CI excludes 1) and **one to
-  three orders of magnitude below every quality cohort**, on both chains and both probes.
-- A control built **exactly like immrep25's own MIRA methodology** — real *proliferating*
-  (expanded) TCRβ clones from mixed-lymphocyte reactions (isalgo/airr_benchmark
-  `alice/mlr`) — gives homology S/N = **1.9** [1.26, 2.81], **statistically
-  indistinguishable from immrep25's 2.7** and built from the same tiny handful of neighbour
-  pairs. immrep25's weak β homology is exactly what antigen-driven clonal expansion yields
-  *without* epitope-specific convergence. (6 proliferating samples = 3 independent
-  reactions × 2 duplicate samples × 2 replicas; each replicate's top-200 β clonotypes = one
-  virtual epitope, 12 in all, scored against the *other* reactions only.)
-- The floor holds even for a **structured real-data control**: **AIRR non-random**, built
-  from the **20 largest real donor samples** (isalgo/airr_benchmark SRA), where each donor's
-  top-50 expanded TRA/TRB clonotypes form one virtual "epitope". This mimics how an
-  epitope-specific dataset is assembled, yet S/N stays at **1.04** — each donor's expanded
-  clones are private (no β clonotype is shared between donors), so there is no convergent
-  structure. immrep25's excess is specific to its epitope→TCR assignments (publicity), not
-  to abundance/expansion in real data. Donors recorded in `results/airr_donors.tsv`.
-- Reported prediction scores agree: IMMREP23 reached median AUC₀.₁ ≳ 0.7 on *seen*
-  peptides ([Nielsen 2024](https://doi.org/10.1016/j.immuno.2024.100045)) but IMMREP25's best was macro-AUC₀.₁ = 0.60 on *unseen* — our audit explains why.
-- Their weak within-epitope homology is **publicity**: 74.5% are within Hamming≤1 of a
-  known VDJdb/TCRvdb TCR; across all 20 epitopes they share just **54** β-neighbours (vs
-  **0** for the OLGA control), concentrated in a few epitopes (YLFNADIWI alone = 20).
-  Removing public TCRs drops homology S/N to **1.00** (β) / 1.37 (α).
-- **Negligible inter-chain α–β coupling** (0.05 bits vs ~1 bit for verified cohorts).
-- **Degree check (1-mm neighborhood pgen, à la mirpy):** generation "degree" varies widely
-  across cohorts — the pooled AIRR-random repertoire is lowest, OLGA random intermediate, and
-  immrep25 together with the abundant AIRR non-random donor clones highest — **yet every control
-  sits at homology S/N≈1**. The S/N is normalized against random partitions, so it reflects
-  epitope-specificity, not absolute degree.
+- The IMMREP25 positives sit **just above the background** and **one to two orders of
+  magnitude below every independently characterised cohort**, on both chains and both probes.
+  The ordering is the point: the ladder is calibrated, so the benchmark's position on it is
+  measured rather than asserted.
+- Two antigen-free controls reach the same place. **MLR expanded** — real *proliferating*
+  TCRβ clones from mixed-lymphocyte reactions — gives S/N **1.97** [1.31, 2.96],
+  statistically indistinguishable from IMMREP25's **2.38**: clonal expansion alone reproduces
+  the benchmark's homology without any epitope-specific convergence. The **pairSEQ mock**,
+  built by running IMMREP25's own selection and post-hoc pairing over a plate to which no
+  peptide was ever added, matches it field for field and sits at **0.95**.
+- The residual excess is **publicity**, not epitope specificity: **68.4%** of the positives
+  lie within Hamming ≤ 1 of a known VDJdb or TCRvdb receptor, and across all 20 epitopes they
+  share only **40** within-epitope β-neighbour pairs. Removing the public fraction leaves
+  **316** novel positives and takes homology S/N to **1.00** (β) and **1.28** (α) — the
+  background.
+- **Negligible inter-chain α–β coupling** (0.05 bits, against ~1 bit for the validated set).
+- Generation propensity does not explain it. The 1-mismatch neighbourhood Pₑₘ varies widely
+  across cohorts, yet every control still sits at S/N ≈ 1: the statistic is normalised against
+  random partitions, so it reflects epitope specificity and not absolute generation degree.
+- The benchmark's own scores agree. IMMREP23 reached median AUC₀.₁ ≳ 0.7 on *seen* peptides
+  ([Nielsen 2024](https://doi.org/10.1016/j.immuno.2024.100045)); IMMREP25's best of 124
+  scored entries was macro-AUC₀.₁ **0.601467** on *unseen* peptides.
 
-**Conclusion:** no meaningful epitope-specific signal in the immrep25 positives beyond
-noise and publicity — consistent with the benchmark's own finding that models cannot
-predict unseen peptides.
-
-## Manuscript
-
-The Oxford *Bioinformatics* submission (Original Paper) lives in [`manuscript/`](manuscript/):
-`main.tex` (OUP `oup-authoring-template` class, author–year), figures rendered from the
-existing analysis by [`figures/build_figs.sh`](manuscript/figures/build_figs.sh), and
-`numbers.tex` (frozen macros from `run_audit.py`). Build: `make -C manuscript` (produces
-`main.pdf` **and** `supplementary.pdf`). `manuscript/supplementary.tex` is the
-**Supplementary Material** (extended-data figures + full epitope table); the gnuplot/TikZ
-figure sources live in [`appendix/analysis/`](appendix/analysis/). See [`SOURCES.md`](SOURCES.md).
+**Conclusion:** what the IMMREP25 positive set carries is little and bounded — close to an
+unselected repertoire once publicity is accounted for, and below what its own negative design
+and label quality allow any method to register. That is a property of the benchmark, not a
+verdict on the methods ranked with it.
 
 ## Reproduce
 
@@ -94,10 +84,10 @@ prefix commands with `uv run` (or `source .venv/bin/activate`). The two extras a
 pipeline below and are NOT installed by a bare `uv sync`: `gen` brings OLGA, which
 `src/compute_1mm.py` and `src/olga_control.py` import, and `embed` brings torch/transformers for
 `src/esm_signal.py`. Plain `uv sync` is enough only to re-derive results from the shipped
-`cache/esm/*.npy` and `results/struct_desc_*.tsv`. gnuplot 6, graphviz and TeX Live build the
-figures and the manuscript. Every number the manuscript prints comes from a macro file written below, and a
-missing macro is a hard LaTeX failure — so the manuscript cannot quote a value this pipeline did not
-produce. Provenance for every artefact is in [SOURCES.md](SOURCES.md).
+`cache/esm/*.npy` and `results/struct_desc_*.tsv`. gnuplot 6 and graphviz build the figures. The manuscript
+itself is kept in a separate repository; every number it prints comes from a macro file written by
+the steps below, and a missing macro is a hard LaTeX failure, so it cannot quote a value this
+pipeline did not produce. Provenance for every artefact is in [SOURCES.md](SOURCES.md).
 
 ```bash
 # 0. fetch inputs (none are committed)
@@ -111,11 +101,12 @@ python tools/build_epitope_hla.py         # epitope -> HLA map used by every per
 
 # 1. controls
 python src/build_olga.py                  # OLGA random          -> results/olga_random.tsv
-python src/olga_control.py                # OLGA pgen-matched    -> results/olga_matched.tsv
 python src/build_airr.py                  # AIRR random + donors -> results/airr_*.tsv
 python src/build_mlr.py                   # MLR expanded, beta   -> results/mlr_prolif.tsv
 python src/build_pairseq.py               # pairSEQ mock         -> results/pairseq_mock.tsv
-python src/build_dcode.py                 # 10x dextramer set    -> results/dcode_clonotypes.tsv
+python src/build_dcode.py                 # 10x dextramer set    -> dump/dcode/dcode_clonotypes.tsv
+# src/olga_control.py is a library (pgen matching and generation), imported by build_olga.py
+# and compute_1mm.py; running it directly only prints a timing check.
 
 # 2. model-free probes and the cohort ladder
 python src/vdjdb_exclusions.py            # phage / dextramer overlaps -> vdjdb_excl_macros
@@ -175,11 +166,8 @@ python src/learnability_embed.py          # [.venv-embed] background PCA bases +
 python src/learnability.py                # one model, VDJdb vs IMMREP25, matched geometry;
                                           # macro-AUC0.1, information gain G, DeltaAIC, Table S10
 
-# 7. figures, then the manuscript (sibling repo)
+# 7. figures and tests
 python src/figures.py                     # matplotlib panels -> results/figures/
-cd ../2026-immrep25-audit-ms && make figs && \
-  make -C briefbioinf-latex && make -C briefsuppl-latex
-
 python tests/test_homology.py             # unit tests
 ```
 
@@ -202,15 +190,16 @@ python tests/test_homology.py             # unit tests
   reported for d=1,2,3 (geometric mean over epitopes). d=0 isolates publicity.
 - **Pairing**: per-epitope V/J gene-usage bias (KL vs background) and Miller–Madow
   inter-chain MI, each as **excess over a permutation null in bits** (→0 under no signal).
-- **Controls (noise floor)**: **OLGA random** (100k/chain pool sampled uniformly),
-  **AIRR random** (unique clonotypes reservoir-sampled from a pooled human repertoire,
-  isalgo/airr_control), and **AIRR non-random** (20 largest real donor samples from
-  isalgo/airr_benchmark SRA; each donor's top-50 TRA/TRB clonotypes = one virtual epitope).
-  OLGA/AIRR-random use random epitope labels; AIRR non-random uses real donor grouping.
+- **Controls (background)**: **OLGA random** (100k/chain pool sampled uniformly), **AIRR
+  random** (unique clonotypes reservoir-sampled from a pooled human repertoire,
+  isalgo/airr_control), and the **pairSEQ mock** (IMMREP25's own selection rule and post-hoc
+  chain pairing run over a peptide-free plate). The first two carry random epitope labels;
+  the mock carries the benchmark's own construction with the antigen removed, which is what
+  makes it the informative one.
 - **MLR expanded (β-only MIRA-analogue)**: real proliferating TCRβ clones from
   mixed-lymphocyte reactions (isalgo/airr_benchmark `alice/mlr`); each replicate's top-200
   β clonotypes = one virtual epitope (12 across 3 reactions), scored one-vs-many against the
   *other reactions only* (same-reaction replicates share the same expanded clones). Mimics
-  how immrep25's positives were generated (expanded β clones, α added afterward).
+  how IMMREP25's positives were generated (expanded β clones, α added afterward).
 
 Authors: Anna E. Koneva & Mikhail Shugay (ISALGO lab) · correspondence: mikhail.shugay@gmail.com
