@@ -1,0 +1,11 @@
+# idx cohort coverage_A lo_A hi_A coverage_B lo_B hi_B label
+1 tcrvdb_true 0.3465 0.2595 0.4403 0.2761 0.1698 0.3803 "TCRvdb pos"
+2 vdjdb_hq 0.1250 0.1134 0.1354 0.1192 0.1112 0.1293 "VDJdb HQ"
+3 immrep22_true 0.1659 0.1410 0.1944 0.1092 0.0826 0.1347 "IMMREP22 pos"
+4 vdjdb_lq 0.0877 0.0755 0.0987 0.0681 0.0605 0.0758 "VDJdb LQ"
+5 tcrvdb_false 0.1193 0.1111 0.1515 0.1417 0.1250 0.1875 "TCRvdb neg"
+6 immrep25_pos 0.0636 0.0636 0.0636 0.0493 0.0493 0.0493 "IMMREP25 pos"
+7 pairseq_mock 0.0020 0.0020 0.0020 0.0020 0.0020 0.0020 "pairSEQ mock"
+8 mlr_prolif NaN NaN NaN 0.0037 0.0000 0.0100 "MLR expanded"
+9 airr_control 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000 "AIRR rand"
+10 olga_random 0.0060 0.0060 0.0060 0.0000 0.0000 0.0000 "OLGA rand"

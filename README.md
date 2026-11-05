@@ -125,6 +125,7 @@ python src/panel1_q.py && python src/panel2_ce.py         # tcrdist3 Q and held-
 
 # 4. benchmark-level arguments and independent controls
 python src/validation_priors.py           # measured f with its CI (Messemaker Table S7)
+python src/sparsity.py                    # coverage + the learnable ceiling it implies
 python src/validation_efficiency.py       # label-noise ceiling 1 - f/2
 python src/germline_baseline.py           # germline-only baseline + ROC (withdrawn from the
                                          # manuscript; utility.py still reads its ROC)
