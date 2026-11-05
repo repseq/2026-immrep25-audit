@@ -1,0 +1,3 @@
+stratum,validating,denom,rate,f,f_lo,f_hi,ceiling,ceiling_at_f_lo,ceiling_at_f_hi
+motif,174,214,0.8131,0.1869,0.1404,0.2445,0.9065,0.9298,0.8777
+motif_free,293,773,0.3790,0.6210,0.5862,0.6545,0.6895,0.7069,0.6728

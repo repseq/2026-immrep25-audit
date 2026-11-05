@@ -52,6 +52,13 @@ F_RANGE = (0.10, 0.50)  # plausible false-positive range for a pool-deconvolutio
 G_RANGE = (0.00, 0.25)  # cross-pool contamination: labelled negatives that are in fact binders.
                         # Forced above 0 by the within-MHC negative design, and likewise never
                         # asserted for IMMREP25 -- reported over a continuum, as f is.
+G_SMALL = (0.02, 0.05)  # reviewer 3.3: a SMALL non-zero false-negative rate. The manuscript
+                        # sets g = 0 on peptide-dissimilarity grounds; these two points show
+                        # what the bound does if that argument is conceded only partly.
+DELTA_TARGETS = (0.02, 0.05)   # method differences a redesigned benchmark might want to resolve
+POS_GRID = (50, 100, 200, 400, 800, 1600, 3200)   # positives per peptide, at the design ratio
+NEG_PER_POS = N_NEG // N_POS   # 9 same-MHC negatives per positive -- the within-MHC geometry
+
 Z = 1.96
 N_SIM = 4000
 SEED = 0
@@ -122,15 +129,25 @@ def _binormal_mu(target: float, max_fpr: float = MAX_FPR) -> float:
     return float(brentq(lambda m: pauc(m) - target, 0.01, 6.0))
 
 
-def sigma_per_peptide(mu: float, n_sim: int = N_SIM, seed: int = SEED) -> tuple[float, float]:
-    """(mean, sd) of the per-peptide macro-AUC0.1 at the benchmark's geometry, by simulation."""
+def sigma_at(mu: float, n_pos: int, n_neg: int, n_sim: int = N_SIM,
+             seed: int = SEED) -> tuple[float, float]:
+    """(mean, sd) of a per-peptide macro-AUC0.1 at an arbitrary pool geometry, by simulation.
+
+    The closed-form Hanley-McNeil variance is for the FULL AUC and does not apply to a
+    standardised partial one, so the sd is simulated at whatever (n_pos, n_neg) is asked for.
+    """
     rng = np.random.default_rng(seed)
-    y = np.r_[np.ones(N_POS), np.zeros(N_NEG)]
+    y = np.r_[np.ones(n_pos), np.zeros(n_neg)]
     v = np.empty(n_sim)
     for i in range(n_sim):
-        s = np.r_[rng.normal(mu, 1.0, N_POS), rng.normal(0.0, 1.0, N_NEG)]
+        s = np.r_[rng.normal(mu, 1.0, n_pos), rng.normal(0.0, 1.0, n_neg)]
         v[i] = roc_auc_score(y, s, max_fpr=MAX_FPR)
     return float(v.mean()), float(v.std(ddof=1))
+
+
+def sigma_per_peptide(mu: float, n_sim: int = N_SIM, seed: int = SEED) -> tuple[float, float]:
+    """(mean, sd) of the per-peptide macro-AUC0.1 at the benchmark's OWN geometry."""
+    return sigma_at(mu, N_POS, N_NEG, n_sim=n_sim, seed=seed)
 
 
 def _selfcheck(seed: int = 1, n_sim: int = 1500) -> float:
@@ -158,6 +175,31 @@ def _selfcheck(seed: int = 1, n_sim: int = 1500) -> float:
             err = max(err, abs(v.mean() - auc_ceiling(f, g)),
                       abs(w.mean() - auc_ceiling_full(f, g)))
     return err
+
+
+def pool_size_for(delta: float, mu: float, f: float = 0.0, *, n_sim: int = 1500,
+                  seed: int = SEED) -> int | None:
+    """Positives per peptide needed before a true difference `delta` is resolvable.
+
+    Reviewer 2 asked how large a benchmark would have to be. Resolvability means the observed
+    difference exceeds Z*sigma(n), and label noise contracts a clean-label delta to (1-f)*delta,
+    so the condition is (1-f)*delta > Z*sigma(n). sigma falls roughly as 1/sqrt(n), so the grid
+    is geometric; the smallest grid point that clears the condition is returned, and None if
+    none does. The class ratio is held at the benchmark's own NEG_PER_POS, so this answers "how
+    much deeper", not "how differently balanced".
+    """
+    for n_pos in POS_GRID:
+        _, s = sigma_at(mu, n_pos, n_pos * NEG_PER_POS, n_sim=n_sim, seed=seed)
+        if (1.0 - f) * delta > Z * s:
+            return n_pos
+    return None
+
+
+def _fmt_pool(n: int | None) -> str:
+    """Format a required pool size, or the grid's ceiling if even its top does not resolve."""
+    if n is None:
+        return "$>$%s" % "{:,}".format(POS_GRID[-1]).replace(",", "\\,")
+    return "{:,}".format(n).replace(",", "\\,")
 
 
 def run():
@@ -201,6 +243,16 @@ def run():
             fh.write("%.3f %.4f %.4f %.4f\n"
                      % (f, auc_ceiling(f, 0.0), auc_ceiling(f, g_hi / 2), auc_ceiling(f, g_hi)))
 
+    # Reviewer 3.3: how much does a SMALL false-negative rate cost, if g = 0 is conceded only
+    # partly? Evaluated on the partial-AUC ceiling, which is the statistic the challenge reports,
+    # at the anchored end of the f range.
+    g_two, g_five = G_SMALL
+    # Reviewer 2: how deep would a benchmark have to be to resolve a given method difference?
+    # Reported both with clean labels and at the measured f, because label noise is what makes
+    # the requirement explode.
+    pool_clean = {d: pool_size_for(d, mu, 0.0) for d in DELTA_TARGETS}
+    pool_noisy = {d: pool_size_for(d, mu, f_hi) for d in DELTA_TARGETS}
+
     macros = {
         "veAucBest": "%.2f" % AUC_BEST,
         "veNsub": "%d" % N_SUB,
@@ -234,6 +286,28 @@ def run():
         # ceiling, i.e. statistically AT the label ceiling; and the ratio at f = F_RANGE[1]
         "veFatCeil": "%.3f" % f_at_ceil,
         "veCritRatioLo": "%.2f" % crit_ratio_lo,
+        # A small non-zero g, for the reviewer who asked what conceding part of the
+        # peptide-dissimilarity argument would cost. Both are evaluated at f = F_RANGE[1].
+        "veGTwoPct": "%d" % round(100 * g_two),
+        "veGFivePct": "%d" % round(100 * g_five),
+        "veCeilGTwo": "%.3f" % auc_ceiling(f_hi, g_two),
+        "veCeilGFive": "%.3f" % auc_ceiling(f_hi, g_five),
+        "veCeilGTwoDrop": "%.3f" % (auc_ceiling(f_hi, 0.0) - auc_ceiling(f_hi, g_two)),
+        "veCeilGFiveDrop": "%.3f" % (auc_ceiling(f_hi, 0.0) - auc_ceiling(f_hi, g_five)),
+        # ... and on the full AUC, where the cost is the symmetric g/2 rather than the much
+        # larger partial-AUC penalty. Quoting both is what shows the penalty is metric-specific.
+        "veCeilFullGFive": "%.3f" % auc_ceiling_full(f_hi, g_five),
+        # Benchmark depth needed to resolve a given true difference (reviewer 2's question).
+        "veDeltaTgtLo": "%.2f" % min(DELTA_TARGETS),
+        "veDeltaTgtHi": "%.2f" % max(DELTA_TARGETS),
+        "vePoolCleanLo": _fmt_pool(pool_clean[min(DELTA_TARGETS)]),
+        "vePoolCleanHi": _fmt_pool(pool_clean[max(DELTA_TARGETS)]),
+        "vePoolNoisyLo": _fmt_pool(pool_noisy[min(DELTA_TARGETS)]),
+        "vePoolNoisyHi": _fmt_pool(pool_noisy[max(DELTA_TARGETS)]),
+        "vePoolRatioHi": ("%d" % round(pool_noisy[max(DELTA_TARGETS)]
+                                       / pool_clean[max(DELTA_TARGETS)])
+                          if pool_clean[max(DELTA_TARGETS)] and pool_noisy[max(DELTA_TARGETS)]
+                          else "--"),
     }
     with open(os.path.join(ADAT, "valideff_macros.tex"), "w") as fh:
         for k, v in macros.items():
@@ -241,6 +315,16 @@ def run():
 
     print("ceiling self-check (both the partial-AUC geometry and 1-f/2-g/2, over the (f,g) "
           "grid): max |simulated - analytic| = %.4f" % err)
+    print("a small false-negative rate costs the reported partial metric %.3f at g=%d%% and "
+          "%.3f at g=%d%% (f fixed at the anchored end), against %.3f on the full AUC"
+          % (auc_ceiling(f_hi, 0.0) - auc_ceiling(f_hi, g_two), round(100 * g_two),
+             auc_ceiling(f_hi, 0.0) - auc_ceiling(f_hi, g_five), round(100 * g_five),
+             auc_ceiling_full(f_hi, 0.0) - auc_ceiling_full(f_hi, g_five)))
+    print("positives per peptide needed to resolve a true difference: %s (delta=%.2f) and %s "
+          "(delta=%.2f) with clean labels; %s and %s at f=%.2f"
+          % (pool_clean[min(DELTA_TARGETS)], min(DELTA_TARGETS),
+             pool_clean[max(DELTA_TARGETS)], max(DELTA_TARGETS),
+             pool_noisy[min(DELTA_TARGETS)], pool_noisy[max(DELTA_TARGETS)], f_hi))
     print("cross-pool contamination alone: the partial-AUC ceiling falls to the reported %.2f "
           "at g = %.1f%% (with perfectly clean positives)" % (AUC_BEST, 100 * g_implied))
     print("per-peptide macro-AUC0.1 at %d vs %d: mean %.3f, sd %.4f  -> smallest resolvable "
