@@ -130,6 +130,7 @@ python src/crossreact_1mm.py              # chain-agreement control: publicity, 
 python src/submission_classes.py          # which entries demonstrably read the peptide
 python src/pgen_publicity.py              # publicity tracks generation probability
 python src/iptm_external.py               # confidence IS a discriminator on a validated set
+python src/ppost_selection.py             # TCRsep: selection factor is flat, ladder unchanged
 python src/validation_efficiency.py       # label-noise ceiling 1 - f/2
 python src/germline_baseline.py           # germline-only baseline + ROC (withdrawn from the
                                          # manuscript; utility.py still reads its ROC)
