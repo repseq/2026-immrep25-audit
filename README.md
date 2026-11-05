@@ -128,6 +128,7 @@ python src/validation_priors.py           # measured f with its CI (Messemaker T
 python src/sparsity.py                    # coverage + the learnable ceiling it implies
 python src/crossreact_1mm.py              # chain-agreement control: publicity, not cross-reactivity
 python src/submission_classes.py          # which entries demonstrably read the peptide
+python src/pgen_publicity.py              # publicity tracks generation probability
 python src/validation_efficiency.py       # label-noise ceiling 1 - f/2
 python src/germline_baseline.py           # germline-only baseline + ROC (withdrawn from the
                                          # manuscript; utility.py still reads its ROC)
