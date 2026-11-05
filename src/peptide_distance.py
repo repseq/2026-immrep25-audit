@@ -72,6 +72,46 @@ def lcsubstr(a: str, b: str) -> int:
     return best
 
 
+# MHC class I anchors for the two alleles in the panel. Both bind nine-mers through P2 and the
+# C-terminal residue, which face the groove rather than the TCR: A*02:01 takes L/M at P2 and
+# V/L/I at P9, B*40:01 a near-obligate E at P2 and L/A/W at P9. Those positions are therefore
+# shared BY CONSTRUCTION among peptides selected for the same allele, and counting them inflates
+# any similarity measure. Reviewer 3 asked whether high-edit-distance peptides might still share
+# critical TCR-facing contacts; masking the anchors is what makes that question answerable.
+ANCHORS = (1, 8)          # zero-based P2 and P9 of a nine-mer
+
+
+def tcr_facing(seq: str, anchors=ANCHORS) -> str:
+    """Drop the anchor positions, leaving the TCR-facing residues in order.
+
+    Used for the mismatch count, where positions are compared independently and dropping two of
+    them simply shortens the comparison to seven.
+    """
+    return "".join(c for i, c in enumerate(seq) if i not in anchors)
+
+
+def mask_anchors(seq: str, anchors=ANCHORS, sentinel: str = ".") -> str:
+    """Replace the anchor residues with `sentinel`, keeping the sequence's length and spacing.
+
+    Used for the shared-substring measure, where position matters. The two sequences of a pair
+    must be masked with DIFFERENT sentinels, so that a masked position never matches and a
+    shared run cannot bridge an anchor -- see `lcsubstr_tcr`. Masking both with the same
+    character would let two peptides sharing nothing but their groove-facing anchors read as
+    carrying a long common motif, which is the artefact this whole arm exists to avoid.
+    """
+    return "".join(sentinel if i in anchors else c for i, c in enumerate(seq))
+
+
+def hamming_tcr(a: str, b: str) -> int:
+    """Position-wise mismatches among the TCR-facing residues only (at most 7 of 9)."""
+    return hamming(tcr_facing(a), tcr_facing(b))
+
+
+def lcsubstr_tcr(a: str, b: str) -> int:
+    """Longest shared contiguous run of TCR-facing residues, never bridging an anchor."""
+    return lcsubstr(mask_anchors(a, sentinel="1"), mask_anchors(b, sentinel="2"))
+
+
 def load_panel() -> pl.DataFrame:
     """The benchmark's 20 positive peptides with their restricting allele."""
     return (pl.read_csv(DATA, separator="\t")
@@ -104,12 +144,17 @@ def pair_table(panel: pl.DataFrame) -> pl.DataFrame:
                 hamming=pl.struct("pep1", "pep2").map_elements(
                     lambda s: hamming(s["pep1"], s["pep2"]), return_dtype=pl.Int64),
                 lcsubstr=pl.struct("pep1", "pep2").map_elements(
-                    lambda s: lcsubstr(s["pep1"], s["pep2"]), return_dtype=pl.Int64)))
+                    lambda s: lcsubstr(s["pep1"], s["pep2"]), return_dtype=pl.Int64),
+                # the same measures restricted to the TCR-facing positions
+                hamming_tcr=pl.struct("pep1", "pep2").map_elements(
+                    lambda s: hamming_tcr(s["pep1"], s["pep2"]), return_dtype=pl.Int64),
+                lcsubstr_tcr=pl.struct("pep1", "pep2").map_elements(
+                    lambda s: lcsubstr_tcr(s["pep1"], s["pep2"]), return_dtype=pl.Int64)))
 
 
 def summarise(t: pl.DataFrame) -> pl.DataFrame:
     """Tidy summary: one row per (kind, allele, metric)."""
-    return (t.unpivot(index=["kind", "hla"], on=["lev", "hamming", "lcsubstr"],
+    return (t.unpivot(index=["kind", "hla"], on=["lev", "hamming", "lcsubstr", "hamming_tcr", "lcsubstr_tcr"],
                       variable_name="metric", value_name="value")
             .group_by("kind", "hla", "metric")
             .agg(n_pairs=pl.len(), min=pl.col("value").min(),
@@ -118,7 +163,8 @@ def summarise(t: pl.DataFrame) -> pl.DataFrame:
 
 
 def main():
-    t = pair_table(load_panel())
+    panel = load_panel()
+    t = pair_table(panel)
     t.write_csv(os.path.join(RESULTS, "peptide_distance.csv"))
     s = summarise(t)
     s.write_csv(os.path.join(RESULTS, "peptide_distance_summary.csv"))
@@ -146,8 +192,50 @@ def main():
     print("  pairs sharing a substring longer than 5 residues: %d of %d" % (n_lcs_gt5, n_pairs))
     print("  pairs within 3 edits of each other: %d of %d" % (n_lev_le3, n_pairs))
 
+    # The TCR-facing arm: identical peptides at the anchors are still unrelated where it
+    # matters. n_shared_tcr counts pairs sharing a run of 4+ TCR-facing residues, the length a
+    # contiguous recognition motif would need (the GIGI/BST2 case is the only well-characterised
+    # precedent, and it rests on such a stretch).
+    lcs_tcr_max = int(within["lcsubstr_tcr"].max())
+    n_tcr_ge4 = int(within.filter(pl.col("lcsubstr_tcr") >= 4).height)
+    ham_tcr_min = int(within["hamming_tcr"].min())
+
+    # Supplementary alignment: the panel with its anchors masked, so a reader can see that the
+    # shared residues are the groove-facing ones.
+    from paths import ms_path
+    panel_sorted = panel.sort("hla", "peptide")
+    with open(ms_path("tables", "peptide_alignment_table.tex"), "w") as fh:
+        fh.write("%% GENERATED by src/peptide_distance.py -- do not edit.\n"
+                 "%% Regenerate: python src/peptide_distance.py "
+                 "(from the 2026-immrep25-audit repo).\n")
+        fh.write("\\begin{tabular}{ll*{9}{c}}\n\\toprule\n")
+        fh.write("HLA & peptide & " + " & ".join("P%d" % (i + 1) for i in range(9))
+                 + " \\\\\n\\midrule\n")
+        last = None
+        for r in panel_sorted.to_dicts():
+            hla = r["hla"] if r["hla"] != last else ""
+            last = r["hla"]
+            cells = []
+            for i, c in enumerate(r["peptide"]):
+                cells.append("\\textbf{%s}" % c if i in ANCHORS else c)
+            fh.write("%s & \\texttt{%s} & %s \\\\\n"
+                     % (hla, r["peptide"], " & ".join(cells)))
+        fh.write("\\bottomrule\n\\end{tabular}\n")
+
+    print("\nwith the MHC anchors (P2, P9) masked, over the same within-allele pairs:")
+    print("  longest shared TCR-facing substring: %d residues" % lcs_tcr_max)
+    print("  pairs sharing 4+ contiguous TCR-facing residues: %d of %d" % (n_tcr_ge4, n_pairs))
+    print("  fewest TCR-facing mismatches in any pair: %d of 7 positions" % ham_tcr_min)
+
     macros = {
         "pepNpairs": "%d" % n_pairs,
+        "pepAnchorP": "P2 and P9",
+        "pepNtcrPos": "%d" % (9 - len(ANCHORS)),
+        "pepLcsTcrMax": "%d" % lcs_tcr_max,
+        "pepLcsTcrMed": "%.0f" % within["lcsubstr_tcr"].median(),
+        "pepNtcrGeFour": "%d" % n_tcr_ge4,
+        "pepHamTcrMin": "%d" % ham_tcr_min,
+        "pepHamTcrMed": "%.0f" % within["hamming_tcr"].median(),
         "pepLevMin": "%d" % lev_min,
         "pepLevMed": "%.0f" % within["lev"].median(),
         "pepHamMin": "%d" % ham_min,
@@ -187,8 +275,26 @@ def demo():
         "edit distance cannot exceed position-wise mismatches at equal length"
     for r in within.head(10).to_dicts():                       # symmetry on a sample
         assert lev(r["pep1"], r["pep2"]) == lev(r["pep2"], r["pep1"])
+    # masking must blank exactly the two anchors, and the two measures must behave as named
+    assert mask_anchors("ABCDEFGHI") == "A.CDEFGH."
+    assert tcr_facing("ABCDEFGHI") == "ACDEFGH"
+    # peptides differing ONLY at their anchors are identical where the TCR looks
+    assert hamming_tcr("ALCDEFGHV", "AMCDEFGHL") == 0
+    # ... and a shared run must stop at an anchor rather than run through it. Here P9 is V in
+    # both, so the unmasked run "CDEFGHV" bridges it; the TCR-facing run must not.
+    assert lcsubstr("AACDEFGHV", "ABCDEFGHV") == 7
+    assert lcsubstr_tcr("AACDEFGHV", "ABCDEFGHV") == 6, \
+        "a shared run must stop at an anchor, not run through it"
+    # two peptides sharing nothing but their anchors must share no TCR-facing run at all
+    assert lcsubstr_tcr("ALAAAAAAV", "AMBBBBBBV") == 1        # only P1
+    assert hamming_tcr("ALAAAAAAV", "AMBBBBBBV") == 6         # six of seven differ
+    masked = within.filter(pl.col("lcsubstr_tcr") > pl.col("lcsubstr")).height
+    assert masked == 0, "restricting to TCR-facing positions cannot lengthen a shared run"
+    assert within["hamming_tcr"].max() <= 7, "at most seven TCR-facing positions can differ"
+
     print("peptide_distance.demo OK  (%d within-allele pairs over %d peptides, all 9-mers; "
-          "lev<=hamming holds for every pair)" % (within.height, panel.height))
+          "lev<=hamming holds for every pair; anchor masking blanks P2/P9 only and never "
+          "lengthens a shared run)" % (within.height, panel.height))
 
 
 if __name__ == "__main__":
