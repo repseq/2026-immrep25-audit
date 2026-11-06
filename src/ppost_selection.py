@@ -17,8 +17,9 @@ across every cohort in the ladder, from the functionally validated positives to 
 mock. Conditioning on Ppost therefore leaves the ordering exactly as Pgen gives it, which is the
 answer the reviewer's question needs.
 
-The scoring itself runs OUTSIDE this repo -- see scratch/ppost/README.md for the job, the host and
-the four compatibility issues it required. TCRsep is not a dependency here; only the summary table
+The scoring itself runs OUTSIDE this repo -- see scratch/ppost/README.md for the job and the
+four compatibility issues it required. Its summary table is committed as
+results/ppost_summary.csv, so this module reproduces without that host. TCRsep is not a dependency here; only the summary table
 it produces is read, so this module fits nothing and cannot perturb a standing value.
 
 NOTE the summary's `median`/`q25`/`q75` columns are of LOG10 of each quantity, including the
@@ -40,7 +41,10 @@ from cohorts import COHORT_META, HIERARCHY                          # noqa: E402
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ADAT = os.path.join(REPO, "appendix", "analysis")
 RESULTS = os.path.join(REPO, "results")
-SRC = os.path.join(REPO, "scratch", "ppost", "ppost_summary.csv")
+# The TCRsep job runs off-repo, but its 3 KB summary is a derived statistic and is COMMITTED
+# here, so the whole chain reproduces from a clean clone without access to the remote host.
+# scratch/ppost/ holds the job (and a 7.8 MB sequences.tsv) and stays local and gitignored.
+SRC = os.path.join(RESULTS, "ppost_summary.csv")
 
 
 def load(path: str = SRC) -> pd.DataFrame:
