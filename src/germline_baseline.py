@@ -181,7 +181,7 @@ def main():
     x = np.arange(len(peps))
     ax.bar(x - 0.2, g_p01[order], 0.4, color="#2c7fb8", label="germline (V/J + CDR3 length)")
     ax.bar(x + 0.2, c_p01[order], 0.4, color="#d7301f", alpha=0.7, label="+ full CDR3 sequence")
-    ax.axhline(COMPETITOR, ls="--", c="black", lw=1, label=f"best of 126 submissions ({COMPETITOR})")
+    ax.axhline(COMPETITOR, ls="--", c="black", lw=1, label=f"best submission ({COMPETITOR})")
     ax.axhline(g_p01.mean(), ls=":", c="#2c7fb8", lw=1)
     ax.axhline(0.5, ls="-", c="grey", lw=0.6)
     ax.set_xticks(x); ax.set_xticklabels([peps[i] for i in order], rotation=90, fontsize=6)

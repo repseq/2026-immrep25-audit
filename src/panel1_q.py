@@ -47,9 +47,13 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS = os.path.join(REPO, "results")
 ADAT = os.path.join(REPO, "appendix", "analysis")
 
-# staging dir holding the per-chain frames and tcrdist3 edge lists (see SOURCES.md)
-WORK = os.environ.get("PANEL1_WORK", "/Users/mikesh/tmp/fig3pc")
-CE = os.environ.get("CLUSTEREVAL", "/Users/mikesh/tmp/clustereval/clustereval/core.py")
+# Staging dir holding the per-chain frames and tcrdist3 edge lists, and the authors' clustereval
+# reference implementation (see SOURCES.md for both). Neither lives in this repo: clustereval is a
+# third-party checkout and the staging dir is bulk intermediates. The defaults are repo-relative so
+# a clean clone has somewhere obvious to put them; override with PANEL1_WORK / CLUSTEREVAL.
+WORK = os.environ.get("PANEL1_WORK", os.path.join(REPO, "dump", "fig3pc"))
+CE = os.environ.get("CLUSTEREVAL",
+                    os.path.join(REPO, "dump", "clustereval", "clustereval", "core.py"))
 
 COHORTS = ["tcrvdb_true", "vdjdb_hq", "immrep22_true", "vdjdb_lq", "immrep25_pos",
            "pairseq_mock", "airr_control", "olga_random"]
@@ -60,13 +64,30 @@ FRAC, N_DRAW, N_PERM = 0.80, 100, 1000
 REF = "immrep25_pos"
 
 # clustereval's __init__ calls importlib.metadata.version(), which needs the package installed;
-# load core.py by path so the analysis venv is untouched.
-_spec = importlib.util.spec_from_file_location("ce_core", CE)
-_ce = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_ce)
+# load core.py by path so the analysis venv is untouched. Loaded LAZILY: at import time this used
+# to abort the whole module with a bare FileNotFoundError, so `import panel1_q` failed on any
+# machine without the checkout and said nothing about how to get it.
+_CE_CACHE = []
+
+
+def clustereval():
+    """The authors' reference implementation, loaded by path. Raises with the recipe if absent."""
+    if _CE_CACHE:
+        return _CE_CACHE[0]
+    if not os.path.exists(CE):
+        raise FileNotFoundError(
+            "clustereval reference implementation not found at %s.\n"
+            "It is a third-party checkout, not part of this repo. Obtain it as SOURCES.md "
+            "records, then either place it at that path or set CLUSTEREVAL to its core.py." % CE)
+    spec = importlib.util.spec_from_file_location("ce_core", CE)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    _CE_CACHE.append(mod)
+    return mod
 
 
 def q_of(y, k):
+    _ce = clustereval()
     h = _ce.homogeneity_score(y, k)
     p = _ce.parsimony_score(y, k)
     return (0.0 if (h + p) == 0 else 2 * h * p / (h + p)), h, p
