@@ -17,7 +17,7 @@ across every cohort in the ladder, from the functionally validated positives to 
 mock. Conditioning on Ppost therefore leaves the ordering exactly as Pgen gives it, which is the
 answer the reviewer's question needs.
 
-The scoring itself runs OUTSIDE this repo -- see scratch/ppost/README.md for the job and the
+The scoring itself runs OUTSIDE this repo -- see tools/ppost/README.md for the job and the
 four compatibility issues it required. Its summary table is committed as
 results/ppost_summary.csv, so this module reproduces without that host. TCRsep is not a dependency here; only the summary table
 it produces is read, so this module fits nothing and cannot perturb a standing value.
