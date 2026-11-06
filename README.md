@@ -79,12 +79,27 @@ verdict on the methods ranked with it.
 
 ## Reproduce
 
+This is a research analysis record, not an install-and-run software distribution.
+The commands below describe our local workflow; raw inputs and embeddings are not
+shipped. Recorded result tables and numeric macros are retained. Local paths and
+separately installed tools are intentional. The selection-model runner and its
+input requirements are in [tools/ppost/README.md](tools/ppost/README.md).
+
+Quick checks, without rerunning completed analyses:
+
+```sh
+.venv/bin/python tests/test_homology.py
+.venv/bin/python src/submission_classes.py --demo
+.venv/bin/python src/crossreact_1mm.py --demo
+.venv/bin/python src/ppost_selection.py --demo
+```
+
 `uv` env (`requires-python >= 3.11`; results reported here were produced on 3.13.14, `pyproject.toml` + `uv.lock`): `uv sync --extra gen --extra embed`, then
 prefix commands with `uv run` (or `source .venv/bin/activate`). The two extras are needed by the
 pipeline below and are NOT installed by a bare `uv sync`: `gen` brings OLGA, which
 `src/compute_1mm.py` and `src/olga_control.py` import, and `embed` brings torch/transformers for
-`src/esm_signal.py`. Plain `uv sync` is enough only to re-derive results from the shipped
-`cache/esm/*.npy` and `results/struct_desc_*.tsv`. gnuplot 6 and graphviz build the figures. The manuscript
+`src/esm_signal.py`. Plain `uv sync` is enough only to re-derive results with the locally available
+`cache/esm/*.npy` and recorded `results/struct_desc_*.tsv`. gnuplot 6 and graphviz build the figures. The manuscript
 itself is kept in a separate repository; every number it prints comes from a macro file written by
 the steps below, and a missing macro is a hard LaTeX failure, so it cannot quote a value this
 pipeline did not produce. Provenance for every artefact is in [SOURCES.md](SOURCES.md).
@@ -180,7 +195,7 @@ python tests/test_homology.py             # unit tests
 
 ## Data
 
-- **immrep25** (`dump/immrep25/`) — public, committed. Cite: Richardson et al., *IMMREP25: Unseen Peptides*, bioRxiv 2026, [10.64898/2026.03.30.715276](https://doi.org/10.64898/2026.03.30.715276).
+- **immrep25** (`dump/immrep25/`) — publicly available, retained locally. Cite: Richardson et al., *IMMREP25: Unseen Peptides*, bioRxiv 2026, [10.64898/2026.03.30.715276](https://doi.org/10.64898/2026.03.30.715276).
 - **VDJdb** — public, **not committed** (large); fetch with `dump/scripts/fetch_vdjdb.sh` from the [2026-06-11 release](https://github.com/antigenomics/vdjdb-db/releases/tag/2026-06-11-ZENODO). Cite: Shugay et al., *Nucleic Acids Research* 2018, [10.1093/nar/gkx760](https://doi.org/10.1093/nar/gkx760).
 - **TCRvdb / MATCHMAKERS** — **private, never committed** (results only). Cite: Messemaker et al., bioRxiv 2025, [10.1101/2025.04.28.651095](https://doi.org/10.1101/2025.04.28.651095).
 - **Chain pairing** background: Shcherbinin, Belousov & Shugay, *PLoS Comput Biol* 2020, [10.1371/journal.pcbi.1007714](https://doi.org/10.1371/journal.pcbi.1007714).
