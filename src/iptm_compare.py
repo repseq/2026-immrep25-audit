@@ -80,33 +80,10 @@ def stars(p):
     return "***" if p < 1e-3 else "**" if p < 1e-2 else "*" if p < 0.05 else "n.s."
 
 
-def main():
-    df = build()
+
+def plot(df, pe, neg_med, an):
     order_ds = ["VDJdb binder", "IMMREP25", "negatives"]
     col = {"VDJdb binder": BLUE, "IMMREP25": RED, "negatives": GREY}
-    med = {d: df[df.dataset == d].iptm.median() for d in order_ds}
-
-    an = nested_anova(df)
-    groups = [df[df.dataset == d].iptm.values for d in order_ds]
-    tuk = stats.tukey_hsd(*groups)
-    pair_p = {(0, 1): tuk.pvalue[0, 1], (0, 2): tuk.pvalue[0, 2], (1, 2): tuk.pvalue[1, 2]}
-
-    # within-epitope GILGFVFTL: real binder vs mismatched
-    gil_pos = df[(df.dataset == "VDJdb binder") & (df.epitope == "GILGFVFTL")].iptm
-    gil_neg = df[(df.dataset == "negatives") & (df.epitope == "GILGFVFTL")].iptm
-    _, gil_p = stats.mannwhitneyu(gil_pos, gil_neg, alternative="greater")
-
-    # per-epitope medians; how many positive epitopes fall below the negatives' median?
-    pe = df.groupby(["dataset", "epitope"]).agg(
-        size=("iptm", "size"), median=("iptm", "median"), hla=("hla", "first")).reset_index()
-    neg_med = med["negatives"]
-    imm_below = int((pe[(pe.dataset == "IMMREP25")]["median"] < neg_med).sum())
-    neg_above_worst_pos = int((pe[pe.dataset == "negatives"]["median"] >
-                               pe[pe.dataset == "IMMREP25"]["median"].min()).sum())
-    pe.to_csv(REPO / "results" / "iptm_per_epitope.csv", index=False)
-    pd.DataFrame([{"dataset": d, "median": med[d], "n": len(df[df.dataset == d])}
-                  for d in order_ds]).to_csv(OUT_CSV, index=False)
-
     # ---- figure: (a) per-epitope ranking, (b) dataset boxes + Tukey stars ----
     fig = plt.figure(figsize=(7.2, 8.8))
     gs = fig.add_gridspec(1, 2, width_ratios=[2.4, 1], wspace=0.30)
@@ -137,7 +114,7 @@ def main():
     for tick, c in zip(ax.get_yticklabels(), colors):
         tick.set_color(c if c != GREY else "black")
     ax.axvline(neg_med, ls="--", c=GREY, lw=1, zorder=10)   # reference line on top of everything
-    ax.set_xlabel("interface ipTM (top-ranked model)"); ax.set_xlim(0.4, 1.0)
+    ax.set_xlabel("interface ipTM (top-ranked model)"); ax.set_xlim(0.0, 1.0)
     ax.set_title("per epitope, ranked", loc="left", fontsize=8)
     # panel letter as its own bold artist, matching every other figure and caption
     ax.text(0.0, 1.035, "(a)", transform=ax.transAxes, ha="left", va="bottom",
@@ -159,7 +136,7 @@ def main():
         m, s = v.mean(), v.std(ddof=1)
         bx.plot([i + 0.22] * 2, [m - s, m + s], c="black", lw=1.3, solid_capstyle="butt")
         bx.plot(i + 0.22, m, "o", ms=3, c="black")
-    bx.set_xlim(0.5, 3.5); bx.set_ylim(0.4, 1.0)
+    bx.set_xlim(0.5, 3.5); bx.set_ylim(0.0, 1.0)
     bx.set_xticks([1, 2, 3]); bx.set_xticklabels(short, fontsize=7)
     bx.tick_params(labelsize=6)
     bx.set_title("by dataset", loc="left", fontsize=8)
@@ -169,11 +146,42 @@ def main():
     # one-way Tukey: the three datasets span disjoint epitope sets, so a pooled test is confounded
     # by peptide composition and overpowered by N. Once the epitope is accounted for the datasets
     # do not differ -- ipTM is governed by the peptide, not by binding status.
-    yb = 0.965
+    yb = 0.94
     bx.plot([1, 1, 3, 3], [yb - 0.01, yb, yb, yb - 0.01], c="black", lw=0.8)
     bx.text(2, yb + 0.006, f"n.s.\n(nested ANOVA $p{{=}}{an['p_ds']:.2f}$)", ha="center", va="bottom", fontsize=6)
 
     fig.savefig(FIG, bbox_inches="tight")
+
+    plt.close(fig)
+
+def main():
+    df = build()
+    order_ds = ["VDJdb binder", "IMMREP25", "negatives"]
+    col = {"VDJdb binder": BLUE, "IMMREP25": RED, "negatives": GREY}
+    med = {d: df[df.dataset == d].iptm.median() for d in order_ds}
+
+    an = nested_anova(df)
+    groups = [df[df.dataset == d].iptm.values for d in order_ds]
+    tuk = stats.tukey_hsd(*groups)
+    pair_p = {(0, 1): tuk.pvalue[0, 1], (0, 2): tuk.pvalue[0, 2], (1, 2): tuk.pvalue[1, 2]}
+
+    # within-epitope GILGFVFTL: real binder vs mismatched
+    gil_pos = df[(df.dataset == "VDJdb binder") & (df.epitope == "GILGFVFTL")].iptm
+    gil_neg = df[(df.dataset == "negatives") & (df.epitope == "GILGFVFTL")].iptm
+    _, gil_p = stats.mannwhitneyu(gil_pos, gil_neg, alternative="greater")
+
+    # per-epitope medians; how many positive epitopes fall below the negatives' median?
+    pe = df.groupby(["dataset", "epitope"]).agg(
+        size=("iptm", "size"), median=("iptm", "median"), hla=("hla", "first")).reset_index()
+    neg_med = med["negatives"]
+    imm_below = int((pe[(pe.dataset == "IMMREP25")]["median"] < neg_med).sum())
+    neg_above_worst_pos = int((pe[pe.dataset == "negatives"]["median"] >
+                               pe[pe.dataset == "IMMREP25"]["median"].min()).sum())
+    pe.to_csv(REPO / "results" / "iptm_per_epitope.csv", index=False)
+    pd.DataFrame([{"dataset": d, "median": med[d], "n": len(df[df.dataset == d])}
+                  for d in order_ds]).to_csv(OUT_CSV, index=False)
+
+    plot(df, pe, neg_med, an)
 
     macros = [
         (r"\iptmBind", f"{med['VDJdb binder']:.2f}"), (r"\iptmImm", f"{med['IMMREP25']:.2f}"),
@@ -264,4 +272,15 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    if "--plot-only" in sys.argv:
+        import re
+        # Redraw from stored structure scores and summaries; do not rerun tests or rewrite results.
+        pe = pd.read_csv(REPO / "results" / "iptm_per_epitope.csv")
+        med = pd.read_csv(OUT_CSV).set_index("dataset")["median"]
+        p_ds = re.search(r"\\newcommand\{\\iptmDsP\}\{=([0-9.]+)\}", MACROS.read_text())
+        if p_ds is None:
+            raise ValueError("Recorded dataset P value is missing")
+        plot(build(), pe, med["negatives"], {"p_ds": float(p_ds.group(1))})
+    else:
+        main()
