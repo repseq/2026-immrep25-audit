@@ -85,7 +85,7 @@ def plot(df, pe, neg_med, an):
     order_ds = ["VDJdb binder", "IMMREP25", "negatives"]
     col = {"VDJdb binder": BLUE, "IMMREP25": RED, "negatives": GREY}
     # ---- figure: (a) per-epitope ranking, (b) dataset boxes + Tukey stars ----
-    fig = plt.figure(figsize=(7.2, 8.8))
+    fig = plt.figure(figsize=(6.35, 7.6))
     gs = fig.add_gridspec(1, 2, width_ratios=[2.4, 1], wspace=0.30)
     ax = fig.add_subplot(gs[0])
     pe_sorted = pe.sort_values("median")
@@ -110,18 +110,19 @@ def plot(df, pe, neg_med, an):
             ln.set_color("black"); ln.set_linewidth(0.5)
     for m in bp["medians"]:
         m.set_color("black"); m.set_linewidth(0.8)
-    ax.set_yticks(range(1, len(labels) + 1)); ax.set_yticklabels(labels, fontsize=6.2)
+    ax.set_yticks(range(1, len(labels) + 1)); ax.set_yticklabels(labels, fontsize=8.5)
     for tick, c in zip(ax.get_yticklabels(), colors):
         tick.set_color(c if c != GREY else "black")
     ax.axvline(neg_med, ls="--", c=GREY, lw=1, zorder=10)   # reference line on top of everything
-    ax.set_xlabel("interface ipTM (top-ranked model)"); ax.set_xlim(0.0, 1.0)
+    ax.tick_params(axis="x", labelsize=8.5)
+    ax.set_xlabel("interface ipTM (top-ranked model)", fontsize=9); ax.set_xlim(0.0, 1.0)
     ax.set_title("per epitope, ranked", loc="left", fontsize=8)
     # panel letter as its own bold artist, matching every other figure and caption
     ax.text(0.0, 1.035, "(a)", transform=ax.transAxes, ha="left", va="bottom",
-            fontsize=9, fontweight="bold")
+            fontsize=10, fontweight="bold")
     from matplotlib.patches import Patch
     ax.legend(handles=[Patch(fc=col[d], alpha=0.65, label=d) for d in order_ds],
-              loc="upper left", fontsize=6.5, frameon=False)
+              loc="upper left", fontsize=8.5, frameon=False)
 
     # Panel (b) shows every observation with its mean +/- SD, in the style of DABEST (Ho et al. 2019),
     # rather than a box summary -- the raw spread is what makes the datasets' overlap visible.
@@ -137,18 +138,18 @@ def plot(df, pe, neg_med, an):
         bx.plot([i + 0.22] * 2, [m - s, m + s], c="black", lw=1.3, solid_capstyle="butt")
         bx.plot(i + 0.22, m, "o", ms=3, c="black")
     bx.set_xlim(0.5, 3.5); bx.set_ylim(0.0, 1.0)
-    bx.set_xticks([1, 2, 3]); bx.set_xticklabels(short, fontsize=7)
-    bx.tick_params(labelsize=6)
+    bx.set_xticks([1, 2, 3]); bx.set_xticklabels(short, fontsize=8.5)
+    bx.tick_params(labelsize=8.5)
     bx.set_title("by dataset", loc="left", fontsize=8)
     bx.text(0.0, 1.035, "(b)", transform=bx.transAxes, ha="left", va="bottom",
-            fontsize=9, fontweight="bold")
+            fontsize=10, fontweight="bold")
     # Across-dataset test = nested ANOVA (dataset with epitope nested within it), NOT the pooled
     # one-way Tukey: the three datasets span disjoint epitope sets, so a pooled test is confounded
     # by peptide composition and overpowered by N. Once the epitope is accounted for the datasets
     # do not differ -- ipTM is governed by the peptide, not by binding status.
     yb = 0.94
     bx.plot([1, 1, 3, 3], [yb - 0.01, yb, yb, yb - 0.01], c="black", lw=0.8)
-    bx.text(2, yb + 0.006, f"n.s.\n(nested ANOVA $p{{=}}{an['p_ds']:.2f}$)", ha="center", va="bottom", fontsize=6)
+    bx.text(2, yb + 0.006, f"n.s.\n$p{{=}}{an['p_ds']:.2f}$", ha="center", va="bottom", fontsize=8)
 
     fig.savefig(FIG, bbox_inches="tight")
 

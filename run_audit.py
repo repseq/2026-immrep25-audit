@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
+from paths import TABLES
 from cohorts import build_cohorts, HIERARCHY, COHORT_META, counts_table
 from homology import per_epitope_sn, dataset_sn
 from homology_graph import build_graph, graph_stats, graph_subsets
@@ -25,7 +26,6 @@ import audit_stats as astat
 REPO = os.path.dirname(os.path.abspath(__file__))
 RESULTS = os.path.join(REPO, "results"); os.makedirs(RESULTS, exist_ok=True)
 ADAT = os.path.join(REPO, "appendix", "analysis"); os.makedirs(ADAT, exist_ok=True)
-TABLES = os.path.join(os.path.dirname(REPO), "2026-immrep25-audit-ms", "tables")
 
 MIN_N = 30       # minimum records per epitope for one-vs-many
 MAX_D = 3

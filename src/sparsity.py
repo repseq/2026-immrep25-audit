@@ -24,13 +24,12 @@ benchmark's own data can support is evidence that the leading entries import kno
 elsewhere and are not adapting to this benchmark at all. A benchmark whose learnable ceiling sits
 below its own leaderboard cannot be ranking what it claims to rank.
 
-Coverage depends on sampling depth, so every cohort is cut to the SAME per-epitope depth
-(PER_EPI = 50, IMMREP25's own) before counting. Comparing a cohort sampled at 600 per epitope with
+Coverage depends on sampling depth, so every cohort is sampled at approximately 50 receptors
+per epitope (a cap of PER_EPI = 50) before counting. Comparing a cohort sampled at 600 per epitope with
 one sampled at 50 would measure the sampling, not the biology. The subsample is repeated over
-N_DRAW seeds and the interval is the spread across draws. For the cohorts that already sit at
-exactly PER_EPI per epitope -- IMMREP25 itself and the synthetic controls -- subsampling is a
-no-op and the interval collapses to a point; that is correct, not a bug, and it is why those
-cohorts are quoted without one.
+N_DRAW seeds and the interval is the spread across draws. Where every qualifying epitope has
+no more than PER_EPI receptors, subsampling retains all receptors and the interval collapses
+to a point.
 
 The inverse reading is the more interpretable one and is emitted too: solving the same sampling
 model for N gives the effective number of distinct specificity solutions per epitope that the
@@ -56,7 +55,7 @@ ADAT = os.path.join(REPO, "appendix", "analysis")
 RESULTS = os.path.join(REPO, "results")
 
 MIN_N = 30        # epitopes with fewer records are not scored, as everywhere else in this repo
-PER_EPI = 50      # common depth: IMMREP25's own, so coverage is comparable across cohorts
+PER_EPI = 50      # sampling cap, approximately matching IMMREP25's per-epitope depth
 N_DRAW = 200      # subsample repeats; the reported interval is the spread over these
 CHAINS = ("A", "B")
 SEED = 0
@@ -131,7 +130,7 @@ def learnable_ceiling(c: float, f: float) -> float:
 
 def per_cohort(coh: dict, chain: str, n_draw: int = N_DRAW,
                seed: int = SEED) -> dict[str, dict[str, float]]:
-    """Coverage and group structure per cohort at a common per-epitope depth."""
+    """Coverage and group structure per cohort using a common per-epitope sampling cap."""
     out: dict[str, dict[str, float]] = {}
     for name in HIERARCHY:
         if name not in coh:
@@ -261,7 +260,7 @@ def run():
         for k, v in macros.items():
             fh.write("\\newcommand{\\%s}{%s}\n" % (k, v))
 
-    print("coverage at a common depth of %d receptors/epitope, %d draws (TCRbeta):" %
+    print("coverage at approximately %d receptors/epitope, %d draws (TCRbeta):" %
           (PER_EPI, N_DRAW))
     for name in HIERARCHY:
         if name in tables["B"]:

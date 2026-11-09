@@ -66,7 +66,7 @@ def fig_homology_graphs(coh, chain="B", min_n=30):
     order = [c for c in HIERARCHY if c in coh and c not in ("mlr_prolif", "airr_control")]
     gsub = graph_subsets(coh, order, chain=chain, min_n=min_n)   # <= 50 receptors per epitope
     n = len(order); ncol = 4; nrow = int(np.ceil(n / ncol))
-    fig, axes = plt.subplots(nrow, ncol, figsize=(3.4 * ncol, 3.4 * nrow))
+    fig, axes = plt.subplots(nrow, ncol, figsize=(6.35, 2.65 * nrow))
     axes = np.array(axes).reshape(-1)
     for ax, name in zip(axes, order):
         sub, full_n, n_eps = gsub[name]
@@ -93,10 +93,11 @@ def fig_homology_graphs(coh, chain="B", min_n=30):
                        c=[cmap(cats[G.nodes[i]["epitope"]] % 10) for i in drawn],
                        alpha=0.9, linewidths=0, zorder=3)
         nn = G.number_of_nodes()
-        ntxt = f"{nn} of {full_n}" if full_n > nn else f"{nn}"     # honest when subsampled
-        ax.set_title(f"{COHORT_META[name]['tex']}\n$N$={ntxt} receptors, {len(cats)} epitopes, "
-                     f"{G.number_of_edges()} edges,\n{nn - len(con)} with no neighbour (not drawn)",
-                     fontsize=7.5, linespacing=1.35)
+        ntxt = f"{nn:,}/{full_n:,}" if full_n > nn else f"{nn:,}"     # honest when subsampled
+        ax.set_title(f"{COHORT_META[name]['label']}\nN={ntxt} receptors\n"
+                     f"{len(cats)} epitopes; {G.number_of_edges():,} edges\n"
+                     f"{nn - len(con):,} isolated (not drawn)",
+                     fontsize=7, linespacing=1.15, pad=5)
         ax.set_xticks([]); ax.set_yticks([])
         ax.set_box_aspect(1)                              # square panels (aspect ratio 1)
     for ax in axes[n:]:
@@ -135,7 +136,7 @@ def fig_controls():
     dc = pd.read_csv(os.path.join(RESULTS, "dcode.csv")).sort_values("sn1")
     mc = pd.read_csv(os.path.join(RESULTS, "mira_covid.csv")).sort_values("sn1", ascending=False)
 
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(11, 4.6), gridspec_kw={"width_ratios": [1, 1.15]})
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(6.35, 4.7), gridspec_kw={"width_ratios": [1, 1.15]})
     # both chains: the probe is run per chain, and on this control TCRalpha is the stronger one.
     # Hollow bar = alpha, filled = beta; fill shade still marks the HLA-A*02:01 subset.
     a02 = dc.hla.astype(str).str.startswith("A*02:01")
@@ -148,10 +149,10 @@ def fig_controls():
     a1.set_ylim(-0.7, len(dc) - 0.3)
     a1.set_xscale("log"); a1.set_xlabel("homology S/N ($d{=}1$)")
     from matplotlib.patches import Patch
-    a1.legend(handles=[Patch(fc="#2166ac", ec="black", lw=0.4, label=r"TCR$\beta$, HLA-A*02:01"),
+    fig.legend(handles=[Patch(fc="#2166ac", ec="black", lw=0.4, label=r"TCR$\beta$, HLA-A*02:01"),
                        Patch(fc="#92c5de", ec="black", lw=0.4, label=r"TCR$\beta$, other allele"),
                        Patch(fc="none", ec="#2166ac", lw=1.0, label=r"TCR$\alpha$ (same colouring)")],
-              loc="lower right", fontsize=6.5, frameon=False)
+              loc="lower center", bbox_to_anchor=(0.5, 0.0), ncol=2, fontsize=7, frameon=False)
 
     a2.plot(np.arange(1, len(mc) + 1), mc.sn1, "-", lw=1.6, color="#35978f")
     a2.set_yscale("log"); a2.set_xlabel("peptide pool, ranked by S/N")
@@ -170,7 +171,12 @@ def fig_controls():
     for ax, lab in ((a1, "a"), (a2, "b")):        # panel labels outside, top left
         ax.text(0.0, 1.02, "(%s)" % lab, transform=ax.transAxes, ha="left", va="bottom",
                 fontsize=9, fontweight="bold")
-    fig.tight_layout(); fig.savefig(os.path.join(FIGS, "fig_controls.pdf")); plt.close(fig)
+    for ax in (a1, a2):
+        ax.tick_params(labelsize=7)
+        ax.xaxis.label.set_size(8)
+        ax.yaxis.label.set_size(8)
+        ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout(rect=(0, 0.13, 1, 1)); fig.savefig(os.path.join(FIGS, "fig_controls.pdf")); plt.close(fig)
     print("wrote fig_controls.pdf")
 
 
